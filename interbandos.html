@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Interbandos 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --neg: #12141A;
+    --neg-2: #1A1D26;
+    --rojo: #E4572E;
+    --rojo-d: #B8431F;
+    --azul: #1D5C9E;
+    --azul-d: #154676;
+    --oro: #D9A441;
+    --crema: #F5F3EE;
+    --crema-dim: #C9C6BE;
+    --radius: 14px;
+    --ease: cubic-bezier(.22,1,.36,1);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--neg);
+    color:var(--crema);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.01ms !important; transition-duration:.01ms !important;}
+  }
+  .display{font-family:'Anton',sans-serif; letter-spacing:.02em; text-transform:uppercase;}
+  .mono{font-family:'Space Mono',monospace;}
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer; border:none; background:none; color:inherit;}
+  :focus-visible{outline:3px solid var(--oro); outline-offset:3px;}
+
+  /* ---------- ESCUDO ---------- */
+  .escudo{display:block;}
+  .escudo path, .escudo circle, .escudo line{vector-effect:non-scaling-stroke;}
+
+  /* ---------- TOP BAR (persistente, hilo visual diagonal) ---------- */
+  .topbar{
+    position:sticky; top:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 20px;
+    background:rgba(18,20,26,.88);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(245,243,238,.08);
+  }
+  .topbar.hidden{display:none;}
+  .topbar-brand{display:flex; align-items:center; gap:10px;}
+  .topbar-brand .escudo{width:30px; height:30px;}
+  .topbar-title{font-size:.92rem; letter-spacing:.06em;}
+  .topbar-split{
+    width:34px; height:12px; border-radius:3px; overflow:hidden; display:flex; flex-shrink:0;
+  }
+  .topbar-split span{flex:1;}
+  .topbar-split span:first-child{background:var(--rojo);}
+  .topbar-split span:last-child{background:var(--azul);}
+  .btn-back{
+    display:flex; align-items:center; gap:6px;
+    font-size:.85rem; font-weight:600; color:var(--crema-dim);
+    padding:8px 10px; border-radius:8px;
+  }
+  .btn-back:hover{color:var(--oro);}
+
+  /* ---------- PORTADA ---------- */
+  .portada{
+    position:relative;
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:32px 20px;
+    overflow:hidden;
+  }
+  .portada-split{
+    position:absolute; inset:0; z-index:0;
+  }
+  .portada-split .lado{
+    position:absolute; top:0; bottom:0; width:60%;
+  }
+  .portada-split .rojo{
+    left:0; background:linear-gradient(135deg, var(--rojo-d), var(--rojo) 65%);
+    clip-path:polygon(0 0, 62% 0, 38% 100%, 0 100%);
+  }
+  .portada-split .azul{
+    right:0; background:linear-gradient(315deg, var(--azul-d), var(--azul) 65%);
+    clip-path:polygon(100% 0, 100% 100%, 62% 100%, 38% 0);
+  }
+  .portada-split::after{
+    content:"";
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 30%, rgba(18,20,26,0) 0%, rgba(18,20,26,.55) 72%, rgba(18,20,26,.92) 100%);
+  }
+  .portada-content{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:22px; max-width:640px;}
+  .escudo-hero{width:88px; height:88px; filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));}
+  .kicker{
+    font-family:'Space Mono',monospace; font-size:.72rem; letter-spacing:.34em;
+    color:var(--oro); text-transform:uppercase;
+  }
+  .titulo-hero{
+    font-size:clamp(2.6rem, 11vw, 5.2rem);
+    line-height:.92;
+  }
+  .anio-hero{
+    display:inline-flex; gap:2px; margin-top:6px;
+  }
+  .anio-hero span{
+    font-family:'Space Mono',monospace; font-weight:700;
+    font-size:clamp(1.1rem, 3.2vw, 1.6rem);
+    background:rgba(245,243,238,.08);
+    border:1px solid rgba(245,243,238,.18);
+    border-radius:6px;
+    padding:4px 8px;
+  }
+  .subtitulo-hero{
+    color:var(--crema-dim); font-size:.98rem; max-width:420px; line-height:1.5;
+  }
+  .institucion-hero{font-size:.82rem; letter-spacing:.05em; color:var(--crema-dim); text-transform:uppercase;}
+
+  .vs-tag{
+    display:flex; align-items:center; gap:14px; margin-top:6px;
+  }
+  .vs-tag .equipo-chip{
+    display:flex; align-items:center; gap:8px;
+    padding:8px 16px; border-radius:999px;
+    font-weight:700; font-size:.85rem; letter-spacing:.04em; text-transform:uppercase;
+  }
+  .vs-tag .rojo-chip{background:rgba(228,87,46,.16); border:1px solid var(--rojo); color:#ffb99f;}
+  .vs-tag .azul-chip{background:rgba(29,92,158,.18); border:1px solid var(--azul); color:#a9cdf2;}
+  .vs-tag .dot{width:8px; height:8px; border-radius:50%;}
+  .rojo-chip .dot{background:var(--rojo);}
+  .azul-chip .dot{background:var(--azul);}
+  .vs-x{font-family:'Anton',sans-serif; font-size:1.1rem; color:var(--crema-dim);}
+
+  .btn-ingresar{
+    margin-top:18px;
+    display:inline-flex; align-items:center; gap:10px;
+    background:var(--oro); color:#1a1206;
+    font-weight:800; font-size:.95rem; letter-spacing:.03em; text-transform:uppercase;
+    padding:15px 30px; border-radius:999px;
+    box-shadow:0 10px 30px rgba(217,164,65,.25);
+    transition:transform .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  .btn-ingresar:hover{transform:translateY(-3px); box-shadow:0 14px 34px rgba(217,164,65,.38);}
+  .btn-ingresar svg{width:16px; height:16px;}
+
+  .scroll-hint{
+    position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+    z-index:2; display:flex; flex-direction:column; align-items:center; gap:6px;
+    color:var(--crema-dim); font-size:.68rem; letter-spacing:.24em; text-transform:uppercase;
+    animation:bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bob{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,6px);}}
+
+  /* ---------- MENU ---------- */
+  .vista{display:none; padding:28px 20px 70px; max-width:1080px; margin:0 auto;}
+  .vista.activa{display:block; animation:fadein .45s var(--ease);}
+  @keyframes fadein{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);}}
+
+  .header-vista{margin-bottom:26px;}
+  .header-vista .kicker{margin-bottom:6px;}
+  .header-vista h1{font-size:clamp(1.8rem,5vw,2.6rem); line-height:1;}
+  .header-vista p{color:var(--crema-dim); margin-top:10px; max-width:520px; font-size:.95rem; line-height:1.5;}
+
+  .menu-grid{
+    display:grid; grid-template-columns:1fr; gap:14px;
+    margin-top:8px;
+  }
+  @media(min-width:600px){ .menu-grid{grid-template-columns:1fr 1fr;} }
+  @media(min-width:980px){ .menu-grid{grid-template-columns:repeat(3,1fr);} }
+
+  .menu-card{
+    position:relative; overflow:hidden;
+    background:var(--neg-2);
+    border:1px solid rgba(245,243,238,.09);
+    border-radius:var(--radius);
+    padding:22px 20px;
+    display:flex; flex-direction:column; gap:14px;
+    min-height:150px;
+    transition:transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
+  }
+  .menu-card:hover{transform:translateY(-4px); border-color:rgba(217,164,65,.4); background:#20232e;}
+  .menu-card .icon-wrap{
+    width:42px; height:42px; border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(217,164,65,.12); color:var(--oro);
+  }
+  .menu-card .icon-wrap svg{width:22px; height:22px;}
+  .menu-card h3{font-size:1.1rem; font-weight:700;}
+  .menu-card p{font-size:.84rem; color:var(--crema-dim); line-height:1.4;}
+  .menu-card .num{
+    position:absolute; top:14px; right:18px;
+    font-family:'Space Mono',monospace; font-size:.72rem; color:rgba(245,243,238,.28);
+  }
+
+  /* ---------- VS BAR (reutilizable) ---------- */
+  .vs-bar{
+    display:flex; align-items:stretch; border-radius:var(--radius); overflow:hidden;
+    border:1px solid rgba(245,243,238,.09); margin:18px 0 26px;
+  }
+  .vs-bar .lado{flex:1; padding:18px 20px; display:flex; flex-direction:column; gap:4px;}
+  .vs-bar .lado.rojo{background:linear-gradient(135deg, rgba(228,87,46,.22), rgba(228,87,46,.06));}
+  .vs-bar .lado.azul{background:linear-gradient(315deg, rgba(29,92,158,.24), rgba(29,92,158,.06));}
+  .vs-bar .label{font-size:.72rem; letter-spacing:.18em; text-transform:uppercase; color:var(--crema-dim);}
+  .vs-bar .valor{font-family:'Anton',sans-serif; font-size:clamp(1.8rem,6vw,2.6rem); line-height:1;}
+  .vs-bar .rojo .valor{color:var(--rojo);}
+  .vs-bar .azul .valor{color:var(--azul); text-align:right;}
+  .vs-bar .azul{text-align:right; align-items:flex-end;}
+  .vs-bar .mid{
+    width:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    background:var(--neg); font-family:'Anton',sans-serif; color:var(--crema-dim); font-size:.85rem;
+  }
+
+  /* ---------- TABS (para Puntos) ---------- */
+  .tabs{display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;}
+  .tab{
+    padding:8px 16px; border-radius:999px; font-size:.82rem; font-weight:600;
+    background:var(--neg-2); border:1px solid rgba(245,243,238,.1); color:var(--crema-dim);
+  }
+  .tab.activo{background:var(--oro); color:#1a1206; border-color:var(--oro);}
+
+  /* ---------- TABLA PUNTOS ---------- */
+  .tabla-puntos{width:100%; border-collapse:collapse; font-size:.92rem;}
+  .tabla-puntos th, .tabla-puntos td{padding:12px 10px; text-align:left; border-bottom:1px solid rgba(245,243,238,.08);}
+  .tabla-puntos th{font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; color:var(--crema-dim); font-weight:600;}
+  .tabla-puntos td.pts-r{color:var(--rojo); font-family:'Space Mono',monospace; font-weight:700;}
+  .tabla-puntos td.pts-a{color:var(--azul); font-family:'Space Mono',monospace; font-weight:700;}
+  .tabla-wrap{overflow-x:auto; border:1px solid rgba(245,243,238,.09); border-radius:var(--radius); background:var(--neg-2);}
+  .tabla-wrap .tabla-puntos{min-width:420px;}
+  .tabla-wrap .tabla-puntos th:first-child, .tabla-wrap .tabla-puntos td:first-child{padding-left:18px;}
+
+  /* ---------- CARDS GENERICAS (juegos / deportes) ---------- */
+  .cards-grid{display:grid; grid-template-columns:1fr; gap:14px;}
+  @media(min-width:600px){ .cards-grid{grid-template-columns:1fr 1fr;} }
+  @media(min-width:980px){ .cards-grid{grid-template-columns:repeat(3,1fr);} }
+  .item-card{
+    background:var(--neg-2); border:1px solid rgba(245,243,238,.09); border-radius:var(--radius);
+    padding:18px; display:flex; flex-direction:column; gap:10px;
+  }
+  .item-card .tag{
+    align-self:flex-start; font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
+    padding:4px 10px; border-radius:999px; background:rgba(217,164,65,.14); color:var(--oro); font-weight:700;
+  }
+  .item-card h4{font-size:1.02rem; font-weight:700;}
+  .item-card p{font-size:.85rem; color:var(--crema-dim); line-height:1.45;}
+  .item-card .puntaje{font-family:'Space Mono',monospace; font-size:.78rem; color:var(--crema-dim); margin-top:auto; padding-top:6px; border-top:1px dashed rgba(245,243,238,.12);}
+
+  /* ---------- CAPITANES ---------- */
+  .capitanes-cols{display:grid; grid-template-columns:1fr; gap:22px;}
+  @media(min-width:760px){ .capitanes-cols{grid-template-columns:1fr 1fr;} }
+  .col-equipo{border-radius:var(--radius); padding:20px; border:1px solid rgba(245,243,238,.09);}
+  .col-equipo.col-rojo{background:linear-gradient(180deg, rgba(228,87,46,.14), rgba(228,87,46,.03));}
+  .col-equipo.col-azul{background:linear-gradient(180deg, rgba(29,92,158,.16), rgba(29,92,158,.03));}
+  .col-equipo-head{display:flex; align-items:center; gap:10px; margin-bottom:16px;}
+  .col-equipo-head .dot{width:12px; height:12px; border-radius:50%;}
+  .col-rojo .dot{background:var(--rojo);}
+  .col-azul .dot{background:var(--azul);}
+  .col-equipo-head h3{font-size:1.15rem; letter-spacing:.02em;}
+  .capitan-row{
+    display:flex; align-items:center; gap:12px; padding:10px 0;
+    border-bottom:1px solid rgba(245,243,238,.08);
+  }
+  .capitan-row:last-child{border-bottom:none;}
+  .avatar-placeholder{
+    width:38px; height:38px; border-radius:50%; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Space Mono',monospace; font-weight:700; font-size:.78rem;
+    background:rgba(245,243,238,.08); color:var(--crema-dim);
+  }
+  .capitan-info{display:flex; flex-direction:column; gap:2px;}
+  .capitan-info .nombre{font-size:.92rem; font-weight:600;}
+  .capitan-info .curso{font-size:.76rem; color:var(--crema-dim);}
+  .badge-rol{
+    margin-left:auto; font-size:.66rem; letter-spacing:.08em; text-transform:uppercase;
+    padding:3px 8px; border-radius:6px; background:rgba(217,164,65,.14); color:var(--oro); font-weight:700; white-space:nowrap;
+  }
+
+  /* ---------- CRONOGRAMA ---------- */
+  .timeline{position:relative; padding-left:26px;}
+  .timeline::before{
+    content:""; position:absolute; left:7px; top:6px; bottom:6px; width:2px;
+    background:linear-gradient(180deg, var(--rojo), var(--oro), var(--azul));
+  }
+  .timeline-item{position:relative; padding-bottom:26px;}
+  .timeline-item:last-child{padding-bottom:0;}
+  .timeline-item::before{
+    content:""; position:absolute; left:-26px; top:4px; width:14px; height:14px; border-radius:50%;
+    background:var(--neg); border:2px solid var(--oro);
+  }
+  .timeline-item .fecha{font-family:'Space Mono',monospace; font-size:.74rem; color:var(--oro); letter-spacing:.06em;}
+  .timeline-item h4{font-size:1rem; font-weight:700; margin-top:3px;}
+  .timeline-item p{font-size:.85rem; color:var(--crema-dim); margin-top:3px; line-height:1.4;}
+
+  /* ---------- FINAL ---------- */
+  .final-hero{
+    border-radius:var(--radius); overflow:hidden; position:relative;
+    padding:34px 24px; text-align:center;
+    background:linear-gradient(135deg, var(--rojo-d) 0%, #2a1f2e 50%, var(--azul-d) 100%);
+    border:1px solid rgba(245,243,238,.1);
+    margin-bottom:22px;
+  }
+  .final-hero .kicker{color:var(--oro);}
+  .final-hero h2{font-size:clamp(1.8rem,6vw,2.6rem); margin-top:8px;}
+  .final-hero p{color:var(--crema-dim); margin-top:8px; max-width:400px; margin-left:auto; margin-right:auto; font-size:.9rem;}
+  .final-datos{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:22px;}
+  @media(min-width:600px){ .final-datos{grid-template-columns:repeat(4,1fr);} }
+  .final-dato{background:rgba(18,20,26,.5); border-radius:10px; padding:14px 10px;}
+  .final-dato .n{font-family:'Space Mono',monospace; font-weight:700; font-size:1.1rem; color:var(--oro);}
+  .final-dato .l{font-size:.68rem; color:var(--crema-dim); text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
+
+  footer{
+    text-align:center; padding:26px 20px 40px; color:rgba(245,243,238,.3); font-size:.74rem;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<div class="topbar hidden" id="topbar">
+  <a href="#" class="btn-back" data-nav="menu">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+    Menú
+  </a>
+  <div class="topbar-brand">
+    <span class="topbar-title display" id="topbarTitle">INTERBANDOS</span>
+  </div>
+  <div class="topbar-split" aria-hidden="true"><span></span><span></span></div>
+</div>
+
+<!-- ============ PORTADA ============ -->
+<section class="vista activa" id="vista-portada">
+  <div class="portada">
+    <div class="portada-split" aria-hidden="true">
+      <div class="lado rojo"></div>
+      <div class="lado azul"></div>
+    </div>
+    <div class="portada-content">
+      <svg class="escudo escudo-hero" viewBox="0 0 100 110" aria-label="Escudo institucional">
+        <path d="M50 4 L92 18 V54 C92 82 74 100 50 108 C26 100 8 82 8 54 V18 Z" fill="#1A1D26" stroke="#D9A441" stroke-width="2.5"/>
+        <path d="M50 4 L92 18 V54 C92 82 74 100 50 108 Z" fill="#D9A441" opacity="0.12"/>
+        <circle cx="50" cy="46" r="20" fill="none" stroke="#D9A441" stroke-width="2"/>
+        <path d="M38 46 L46 54 L64 34" fill="none" stroke="#F5F3EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <line x1="26" y1="80" x2="74" y2="80" stroke="#D9A441" stroke-width="1.5"/>
+        <text x="50" y="94" text-anchor="middle" font-family="Space Mono, monospace" font-size="8" fill="#F5F3EE" letter-spacing="1">IMM</text>
+      </svg>
+
+      <div class="kicker">Instituto Mariano Moreno · Educación Física</div>
+      <div>
+        <h1 class="titulo-hero display">Interbandos</h1>
+        <div class="anio-hero">
+          <span>2</span><span>0</span><span>2</span><span>6</span>
+        </div>
+      </div>
+
+      <div class="vs-tag">
+        <span class="equipo-chip rojo-chip"><span class="dot"></span>Rojo</span>
+        <span class="vs-x">VS</span>
+        <span class="equipo-chip azul-chip"><span class="dot"></span>Azul</span>
+      </div>
+
+      <p class="subtitulo-hero">Un cuatrimestre, dos bandas, un solo torneo. Seguí capitanes, juegos, deportes y el marcador general rumbo a la gran final.</p>
+
+      <button class="btn-ingresar" data-nav="menu">
+        Ingresar al torneo
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span>Explorar</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MENU ============ -->
+<section class="vista" id="vista-menu">
+  <div class="header-vista">
+    <div class="kicker">Interbandos 2026</div>
+    <h1 class="display">Menú principal</h1>
+    <p>Elegí una sección para ver el detalle del torneo.</p>
+  </div>
+
+  <div class="menu-grid">
+    <a href="#" class="menu-card" data-nav="capitanes">
+      <span class="num mono">01</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 5.2L20 8l-4.2 3.6L17 18l-5-3.2L7 18l1.2-6.4L4 8l5.6-.8z"/></svg>
+      </div>
+      <div>
+        <h3>Capitanes</h3>
+        <p>Lista de alumnos por color y sus capitanes de banda.</p>
+      </div>
+    </a>
+
+    <a href="#" class="menu-card" data-nav="juegos">
+      <span class="num mono">02</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>
+      </div>
+      <div>
+        <h3>Juegos</h3>
+        <p>Postas, desafíos y dinámicas recreativas del interbandos.</p>
+      </div>
+    </a>
+
+    <a href="#" class="menu-card" data-nav="deportes">
+      <span class="num mono">03</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 2.5 15.4 0 18M12 3c-2.5 2.6-2.5 15.4 0 18"/></svg>
+      </div>
+      <div>
+        <h3>Deportes</h3>
+        <p>Disciplinas oficiales y formato de cada partido.</p>
+      </div>
+    </a>
+
+    <a href="#" class="menu-card" data-nav="puntos">
+      <span class="num mono">04</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+      </div>
+      <div>
+        <h3>Puntos</h3>
+        <p>Marcador por curso y tabla general del torneo.</p>
+      </div>
+    </a>
+
+    <a href="#" class="menu-card" data-nav="final">
+      <span class="num mono">05</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 21h8M12 17v4M6 3h12v4a6 6 0 0 1-12 0V3ZM6 5H3a2 2 0 0 0 2 4M18 5h3a2 2 0 0 1-2 4"/></svg>
+      </div>
+      <div>
+        <h3>Final</h3>
+        <p>Todo sobre la jornada final: sede, fecha y actividades.</p>
+      </div>
+    </a>
+
+    <a href="#" class="menu-card" data-nav="cronograma">
+      <span class="num mono">06</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+      </div>
+      <div>
+        <h3>Cronograma</h3>
+        <p>Fechas clave desde el sorteo hasta la premiación.</p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ============ CAPITANES ============ -->
+<section class="vista" id="vista-capitanes">
+  <div class="header-vista">
+    <div class="kicker">Sección 01</div>
+    <h1 class="display">Capitanes</h1>
+    <p>Un capitán general por banda y referentes por curso. Reemplazá los nombres de ejemplo por la lista real de alumnos.</p>
+  </div>
+
+  <div class="capitanes-cols">
+    <div class="col-equipo col-rojo">
+      <div class="col-equipo-head"><span class="dot"></span><h3>Banda Roja</h3></div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">JR</div>
+        <div class="capitan-info"><span class="nombre">Juan Ramírez</span><span class="curso">5° año</span></div>
+        <span class="badge-rol">General</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">MG</div>
+        <div class="capitan-info"><span class="nombre">Martina Gómez</span><span class="curso">4° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">LF</div>
+        <div class="capitan-info"><span class="nombre">Lucas Fernández</span><span class="curso">3° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">SP</div>
+        <div class="capitan-info"><span class="nombre">Sofía Paz</span><span class="curso">2° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">TD</div>
+        <div class="capitan-info"><span class="nombre">Tomás Díaz</span><span class="curso">1° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+    </div>
+
+    <div class="col-equipo col-azul">
+      <div class="col-equipo-head"><span class="dot"></span><h3>Banda Azul</h3></div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">CA</div>
+        <div class="capitan-info"><span class="nombre">Camila Acosta</span><span class="curso">5° año</span></div>
+        <span class="badge-rol">General</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">NR</div>
+        <div class="capitan-info"><span class="nombre">Nicolás Rojas</span><span class="curso">4° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">VL</div>
+        <div class="capitan-info"><span class="nombre">Valentina López</span><span class="curso">3° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">BM</div>
+        <div class="capitan-info"><span class="nombre">Benjamín Moreno</span><span class="curso">2° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+      <div class="capitan-row">
+        <div class="avatar-placeholder">AI</div>
+        <div class="capitan-info"><span class="nombre">Abril Ibáñez</span><span class="curso">1° año</span></div>
+        <span class="badge-rol">Referente</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ JUEGOS ============ -->
+<section class="vista" id="vista-juegos">
+  <div class="header-vista">
+    <div class="kicker">Sección 02</div>
+    <h1 class="display">Juegos</h1>
+    <p>Dinámicas recreativas que suman puntos extra por curso y por banda.</p>
+  </div>
+
+  <div class="cards-grid">
+    <div class="item-card">
+      <span class="tag">Grupal</span>
+      <h4>Posta de relevos</h4>
+      <p>Equipos mixtos por curso compiten en una posta de obstáculos cronometrada.</p>
+      <span class="puntaje mono">+15 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Fuerza</span>
+      <h4>Tirón de la soga</h4>
+      <p>Formato eliminación directa entre cursos del mismo ciclo.</p>
+      <span class="puntaje mono">+10 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Recreativo</span>
+      <h4>Carrera de embolsados</h4>
+      <p>Individual, clasifican los tres primeros de cada curso.</p>
+      <span class="puntaje mono">+5 / +3 / +1 pts</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Precisión</span>
+      <h4>Tiro al blanco</h4>
+      <p>Estación libre durante el recreo extendido, puntaje acumulable.</p>
+      <span class="puntaje mono">+1 pt por acierto</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Grupal</span>
+      <h4>Búsqueda del tesoro</h4>
+      <p>Pistas por banda distribuidas en el patio, gana quien complete el recorrido.</p>
+      <span class="puntaje mono">+12 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Show</span>
+      <h4>Aliento y banderas</h4>
+      <p>Puntaje del jurado a la presentación y el aliento de cada banda.</p>
+      <span class="puntaje mono">+8 pts máx.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEPORTES ============ -->
+<section class="vista" id="vista-deportes">
+  <div class="header-vista">
+    <div class="kicker">Sección 03</div>
+    <h1 class="display">Deportes</h1>
+    <p>Disciplinas oficiales del interbandos, por categoría y formato de juego.</p>
+  </div>
+
+  <div class="cards-grid">
+    <div class="item-card">
+      <span class="tag">Cancha</span>
+      <h4>Fútbol</h4>
+      <p>Formato 7 vs 7, partidos de 20 minutos por categoría (Ciclo Básico / Superior).</p>
+      <span class="puntaje mono">+20 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Cancha</span>
+      <h4>Vóley</h4>
+      <p>Sets a 15 puntos, mixto en Ciclo Básico y por género en Ciclo Superior.</p>
+      <span class="puntaje mono">+15 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Cancha</span>
+      <h4>Handball</h4>
+      <p>Partidos de 15 minutos por lado, arbitraje a cargo de profesores.</p>
+      <span class="puntaje mono">+15 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Cancha</span>
+      <h4>Básquet 3x3</h4>
+      <p>Medio court, primero en llegar a 15 puntos o al finalizar el tiempo.</p>
+      <span class="puntaje mono">+12 pts al ganador</span>
+    </div>
+    <div class="item-card">
+      <span class="tag">Pista</span>
+      <h4>Atletismo</h4>
+      <p>Postas 4x100 por curso, suma puntos individuales y grupales.</p>
+      <span class="puntaje mono">+10 pts al ganador</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PUNTOS ============ -->
+<section class="vista" id="vista-puntos">
+  <div class="header-vista">
+    <div class="kicker">Sección 04</div>
+    <h1 class="display">Puntos</h1>
+    <p>Marcador acumulado del torneo. Cambiá entre la vista por curso y el total general.</p>
+  </div>
+
+  <div class="vs-bar">
+    <div class="lado rojo">
+      <span class="label">Banda Roja</span>
+      <span class="valor mono" id="totalRojo">142</span>
+    </div>
+    <div class="mid">VS</div>
+    <div class="lado azul">
+      <span class="label">Banda Azul</span>
+      <span class="valor mono" id="totalAzul">128</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab activo" data-tab="general">General</button>
+    <button class="tab" data-tab="curso">Por curso</button>
+  </div>
+
+  <div id="tab-general">
+    <div class="tabla-wrap">
+      <table class="tabla-puntos">
+        <thead><tr><th>Instancia</th><th>Rojo</th><th>Azul</th></tr></thead>
+        <tbody>
+          <tr><td>Deportes</td><td class="pts-r">72</td><td class="pts-a">68</td></tr>
+          <tr><td>Juegos</td><td class="pts-r">45</td><td class="pts-a">40</td></tr>
+          <tr><td>Aliento y banderas</td><td class="pts-r">7</td><td class="pts-a">8</td></tr>
+          <tr><td>Bonus asistencia</td><td class="pts-r">18</td><td class="pts-a">12</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="tab-curso" style="display:none;">
+    <div class="tabla-wrap">
+      <table class="tabla-puntos">
+        <thead><tr><th>Curso</th><th>Rojo</th><th>Azul</th></tr></thead>
+        <tbody>
+          <tr><td>1° año</td><td class="pts-r">18</td><td class="pts-a">22</td></tr>
+          <tr><td>2° año</td><td class="pts-r">26</td><td class="pts-a">19</td></tr>
+          <tr><td>3° año</td><td class="pts-r">31</td><td class="pts-a">24</td></tr>
+          <tr><td>4° año</td><td class="pts-r">29</td><td class="pts-a">35</td></tr>
+          <tr><td>5° año</td><td class="pts-r">38</td><td class="pts-a">28</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL ============ -->
+<section class="vista" id="vista-final">
+  <div class="header-vista">
+    <div class="kicker">Sección 05</div>
+    <h1 class="display">La final</h1>
+    <p>Todo lo que necesitás saber sobre la jornada de cierre del torneo.</p>
+  </div>
+
+  <div class="final-hero">
+    <div class="kicker">Gran cierre · Interbandos 2026</div>
+    <h2 class="display">Rojo vs Azul</h2>
+    <p>Jornada completa con los tres mejores cursos de cada banda, exhibición de atletismo y entrega de copa.</p>
+    <div class="final-datos">
+      <div class="final-dato"><div class="n mono">14/11</div><div class="l">Fecha</div></div>
+      <div class="final-dato"><div class="n mono">08:30</div><div class="l">Inicio</div></div>
+      <div class="final-dato"><div class="n mono">Predio</div><div class="l">Sede</div></div>
+      <div class="final-dato"><div class="n mono">Todos</div><div class="l">Cursos</div></div>
+    </div>
+  </div>
+
+  <div class="cards-grid">
+    <div class="item-card">
+      <span class="tag">Apertura</span>
+      <h4>Desfile de bandas</h4>
+      <p>Entrada con bandera de cada color y presentación de capitanes.</p>
+    </div>
+    <div class="item-card">
+      <span class="tag">Central</span>
+      <h4>Definiciones deportivas</h4>
+      <p>Finales de fútbol, vóley y handball entre los mejores cursos de cada banda.</p>
+    </div>
+    <div class="item-card">
+      <span class="tag">Cierre</span>
+      <h4>Premiación</h4>
+      <p>Entrega de la copa Interbandos a la banda con más puntos acumulados.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CRONOGRAMA ============ -->
+<section class="vista" id="vista-cronograma">
+  <div class="header-vista">
+    <div class="kicker">Sección 06</div>
+    <h1 class="display">Cronograma</h1>
+    <p>Recorrido del torneo desde el sorteo de bandas hasta la premiación final.</p>
+  </div>
+
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="fecha">MARZO</div>
+      <h4>Sorteo de bandas</h4>
+      <p>Asignación de alumnos a Rojo y Azul, elección de capitanes por curso.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="fecha">ABRIL – MAYO</div>
+      <h4>Fase de deportes</h4>
+      <p>Partidos de fútbol, vóley, handball y básquet 3x3 por categoría.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="fecha">JUNIO</div>
+      <h4>Semana de juegos</h4>
+      <p>Postas, tirón de la soga y demás dinámicas recreativas en el patio.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="fecha">AGOSTO – SEPTIEMBRE</div>
+      <h4>Segunda fase deportiva</h4>
+      <p>Revanchas y definiciones de atletismo por curso.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="fecha">OCTUBRE</div>
+      <h4>Cierre de puntaje</h4>
+      <p>Se congela la tabla general y se definen los tres mejores cursos de cada banda.</p>
+    </div>
+    <div class="timeline-item">
+      <div class="fecha">14 DE NOVIEMBRE</div>
+      <h4>Gran final</h4>
+      <p>Jornada de cierre con desfile, definiciones y entrega de la copa.</p>
+    </div>
+  </div>
+</section>
+
+<footer>Instituto Mariano Moreno · Interbandos 2026</footer>
+
+<script>
+  (function(){
+    const vistas = document.querySelectorAll('.vista');
+    const topbar = document.getElementById('topbar');
+    const topbarTitle = document.getElementById('topbarTitle');
+    const titulos = {
+      menu:'MENÚ', capitanes:'CAPITANES', juegos:'JUEGOS',
+      deportes:'DEPORTES', puntos:'PUNTOS', final:'FINAL', cronograma:'CRONOGRAMA'
+    };
+
+    function irA(id){
+      vistas.forEach(v => v.classList.remove('activa'));
+      const target = document.getElementById('vista-' + id);
+      if(target) target.classList.add('activa');
+
+      if(id === 'portada'){
+        topbar.classList.add('hidden');
+      } else {
+        topbar.classList.remove('hidden');
+        topbarTitle.textContent = titulos[id] || 'INTERBANDOS';
+      }
+      window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
+      try{ history.replaceState(null, '', '#' + id); }catch(e){ /* sandbox no permite tocar el historial */ }
+    }
+
+    document.querySelectorAll('[data-nav]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        e.preventDefault();
+        irA(el.getAttribute('data-nav'));
+      });
+    });
+
+    // Tabs de puntos
+    document.querySelectorAll('.tab').forEach(tab=>{
+      tab.addEventListener('click', ()=>{
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('activo'));
+        tab.classList.add('activo');
+        const modo = tab.getAttribute('data-tab');
+        document.getElementById('tab-general').style.display = modo === 'general' ? 'block' : 'none';
+        document.getElementById('tab-curso').style.display = modo === 'curso' ? 'block' : 'none';
+      });
+    });
+
+    // Deep-link inicial
+    const hash = location.hash.replace('#','');
+    if(hash && document.getElementById('vista-' + hash)){
+      irA(hash);
+    }
+  })();
+</script>
+
+</body>
+</html>
