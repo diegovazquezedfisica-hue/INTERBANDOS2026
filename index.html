@@ -9,12 +9,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --neg: #12141A;
-    --neg-2: #1A1D26;
+    --neg: #1B1430;
+    --neg-2: #26193F;
     --rojo: #E4572E;
     --rojo-d: #B8431F;
     --azul: #1D5C9E;
     --azul-d: #154676;
+    --violeta: #8B5FBF;
+    --violeta-d: #5C3E82;
     --oro: #D9A441;
     --crema: #F5F3EE;
     --crema-dim: #C9C6BE;
@@ -49,7 +51,7 @@
     position:sticky; top:0; z-index:40;
     display:flex; align-items:center; justify-content:space-between;
     padding:14px 20px;
-    background:rgba(18,20,26,.88);
+    background:rgba(27,20,48,.88);
     backdrop-filter:blur(10px);
     border-bottom:1px solid rgba(245,243,238,.08);
   }
@@ -58,11 +60,12 @@
   .topbar-brand .escudo{width:30px; height:30px;}
   .topbar-title{font-size:.92rem; letter-spacing:.06em;}
   .topbar-split{
-    width:34px; height:12px; border-radius:3px; overflow:hidden; display:flex; flex-shrink:0;
+    width:40px; height:12px; border-radius:3px; overflow:hidden; display:flex; flex-shrink:0;
   }
   .topbar-split span{flex:1;}
-  .topbar-split span:first-child{background:var(--rojo);}
-  .topbar-split span:last-child{background:var(--azul);}
+  .topbar-split span:nth-child(1){background:var(--rojo);}
+  .topbar-split span:nth-child(2){background:var(--violeta);}
+  .topbar-split span:nth-child(3){background:var(--azul);}
   .btn-back{
     display:flex; align-items:center; gap:6px;
     font-size:.85rem; font-weight:600; color:var(--crema-dim);
@@ -87,17 +90,23 @@
     position:absolute; top:0; bottom:0; width:60%;
   }
   .portada-split .rojo{
-    left:0; background:linear-gradient(135deg, var(--rojo-d), var(--rojo) 65%);
+    left:0; background:linear-gradient(135deg, var(--violeta-d), var(--rojo-d) 35%, var(--rojo) 75%);
     clip-path:polygon(0 0, 62% 0, 38% 100%, 0 100%);
   }
   .portada-split .azul{
-    right:0; background:linear-gradient(315deg, var(--azul-d), var(--azul) 65%);
+    right:0; background:linear-gradient(315deg, var(--violeta-d), var(--azul-d) 35%, var(--azul) 75%);
     clip-path:polygon(100% 0, 100% 100%, 62% 100%, 38% 0);
+  }
+  .portada-split .costura{
+    left:0; width:100%;
+    background:linear-gradient(90deg, transparent 42%, var(--violeta) 49% ,var(--violeta) 51%, transparent 58%);
+    clip-path:polygon(64% 0, 74% 0, 42% 100%, 32% 100%);
+    opacity:.95;
   }
   .portada-split::after{
     content:"";
     position:absolute; inset:0;
-    background:radial-gradient(circle at 50% 30%, rgba(18,20,26,0) 0%, rgba(18,20,26,.55) 72%, rgba(18,20,26,.92) 100%);
+    background:radial-gradient(circle at 50% 30%, rgba(27,20,48,0) 0%, rgba(38,25,63,.5) 72%, rgba(27,20,48,.85) 100%);
   }
   .portada-content{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:22px; max-width:640px;}
   .escudo-hero{width:88px; height:88px; filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));}
@@ -138,7 +147,7 @@
   .vs-tag .dot{width:8px; height:8px; border-radius:50%;}
   .rojo-chip .dot{background:var(--rojo);}
   .azul-chip .dot{background:var(--azul);}
-  .vs-x{font-family:'Anton',sans-serif; font-size:1.1rem; color:var(--crema-dim);}
+  .vs-x{font-family:'Anton',sans-serif; font-size:1.1rem; color:var(--violeta); text-shadow:0 0 14px rgba(139,95,191,.5);}
 
   .btn-ingresar{
     margin-top:18px;
@@ -152,13 +161,6 @@
   .btn-ingresar:hover{transform:translateY(-3px); box-shadow:0 14px 34px rgba(217,164,65,.38);}
   .btn-ingresar svg{width:16px; height:16px;}
 
-  .scroll-hint{
-    position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
-    z-index:2; display:flex; flex-direction:column; align-items:center; gap:6px;
-    color:var(--crema-dim); font-size:.68rem; letter-spacing:.24em; text-transform:uppercase;
-    animation:bob 2.2s ease-in-out infinite;
-  }
-  @keyframes bob{0%,100%{transform:translate(-50%,0);}50%{transform:translate(-50%,6px);}}
 
   /* ---------- MENU ---------- */
   .vista{display:none; padding:28px 20px 70px; max-width:1080px; margin:0 auto;}
@@ -187,7 +189,7 @@
     min-height:150px;
     transition:transform .3s var(--ease), border-color .3s var(--ease), background .3s var(--ease);
   }
-  .menu-card:hover{transform:translateY(-4px); border-color:rgba(217,164,65,.4); background:#20232e;}
+  .menu-card:hover{transform:translateY(-4px); border-color:rgba(139,95,191,.55); background:#2E2049;}
   .menu-card .icon-wrap{
     width:42px; height:42px; border-radius:10px;
     display:flex; align-items:center; justify-content:center;
@@ -216,7 +218,8 @@
   .vs-bar .azul{text-align:right; align-items:flex-end;}
   .vs-bar .mid{
     width:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
-    background:var(--neg); font-family:'Anton',sans-serif; color:var(--crema-dim); font-size:.85rem;
+    background:var(--neg); font-family:'Anton',sans-serif; color:var(--violeta); font-size:.85rem;
+    border-left:1px solid rgba(139,95,191,.35); border-right:1px solid rgba(139,95,191,.35);
   }
 
   /* ---------- TABS (para Puntos) ---------- */
@@ -287,15 +290,15 @@
   .timeline{position:relative; padding-left:26px;}
   .timeline::before{
     content:""; position:absolute; left:7px; top:6px; bottom:6px; width:2px;
-    background:linear-gradient(180deg, var(--rojo), var(--oro), var(--azul));
+    background:linear-gradient(180deg, var(--rojo), var(--violeta), var(--azul));
   }
   .timeline-item{position:relative; padding-bottom:26px;}
   .timeline-item:last-child{padding-bottom:0;}
   .timeline-item::before{
     content:""; position:absolute; left:-26px; top:4px; width:14px; height:14px; border-radius:50%;
-    background:var(--neg); border:2px solid var(--oro);
+    background:var(--neg); border:2px solid var(--violeta);
   }
-  .timeline-item .fecha{font-family:'Space Mono',monospace; font-size:.74rem; color:var(--oro); letter-spacing:.06em;}
+  .timeline-item .fecha{font-family:'Space Mono',monospace; font-size:.74rem; color:var(--violeta); letter-spacing:.06em;}
   .timeline-item h4{font-size:1rem; font-weight:700; margin-top:3px;}
   .timeline-item p{font-size:.85rem; color:var(--crema-dim); margin-top:3px; line-height:1.4;}
 
@@ -303,7 +306,7 @@
   .final-hero{
     border-radius:var(--radius); overflow:hidden; position:relative;
     padding:34px 24px; text-align:center;
-    background:linear-gradient(135deg, var(--rojo-d) 0%, #2a1f2e 50%, var(--azul-d) 100%);
+    background:linear-gradient(135deg, var(--rojo-d) 0%, var(--violeta-d) 50%, var(--azul-d) 100%);
     border:1px solid rgba(245,243,238,.1);
     margin-bottom:22px;
   }
@@ -312,13 +315,40 @@
   .final-hero p{color:var(--crema-dim); margin-top:8px; max-width:400px; margin-left:auto; margin-right:auto; font-size:.9rem;}
   .final-datos{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:22px;}
   @media(min-width:600px){ .final-datos{grid-template-columns:repeat(4,1fr);} }
-  .final-dato{background:rgba(18,20,26,.5); border-radius:10px; padding:14px 10px;}
+  .final-dato{background:rgba(38,25,63,.55); border-radius:10px; padding:14px 10px;}
   .final-dato .n{font-family:'Space Mono',monospace; font-weight:700; font-size:1.1rem; color:var(--oro);}
   .final-dato .l{font-size:.68rem; color:var(--crema-dim); text-transform:uppercase; letter-spacing:.08em; margin-top:2px;}
 
   footer{
     text-align:center; padding:26px 20px 40px; color:rgba(245,243,238,.3); font-size:.74rem;
   }
+
+  /* ---------- LOGOS REALES (escudo + patches) ---------- */
+  .escudo-img{ object-fit:contain; }
+  .patch{
+    display:inline-flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .patch img{
+    width:100%; height:100%; object-fit:contain; display:block;
+    filter:drop-shadow(0 4px 10px rgba(0,0,0,.5));
+  }
+  .patch.patch-sm{ width:34px; height:34px; }
+  .patch.patch-md{ width:48px; height:48px; }
+  .patch.patch-lg{ width:88px; height:88px; }
+  .patch.patch-xl{ width:112px; height:112px; }
+
+  .vs-patches{
+    display:flex; align-items:center; gap:18px; margin-top:8px;
+  }
+  .vs-patches .equipo-mini{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .vs-patches .equipo-mini span{
+    font-size:.72rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+  }
+  .vs-patches .rojo-label{ color:var(--rojo); }
+  .vs-patches .azul-label{ color:var(--azul); }
+
+  .topbar-brand .patch{ width:30px; height:30px; }
 </style>
 </head>
 <body>
@@ -330,9 +360,10 @@
     Menú
   </a>
   <div class="topbar-brand">
+    <span class="patch"><img src="assets/escudo.png" alt="Escudo Instituto Mariano Moreno"></span>
     <span class="topbar-title display" id="topbarTitle">INTERBANDOS</span>
   </div>
-  <div class="topbar-split" aria-hidden="true"><span></span><span></span></div>
+  <div class="topbar-split" aria-hidden="true"><span></span><span></span><span></span></div>
 </div>
 
 <!-- ============ PORTADA ============ -->
@@ -341,18 +372,12 @@
     <div class="portada-split" aria-hidden="true">
       <div class="lado rojo"></div>
       <div class="lado azul"></div>
+      <div class="lado costura"></div>
     </div>
     <div class="portada-content">
-      <svg class="escudo escudo-hero" viewBox="0 0 100 110" aria-label="Escudo institucional">
-        <path d="M50 4 L92 18 V54 C92 82 74 100 50 108 C26 100 8 82 8 54 V18 Z" fill="#1A1D26" stroke="#D9A441" stroke-width="2.5"/>
-        <path d="M50 4 L92 18 V54 C92 82 74 100 50 108 Z" fill="#D9A441" opacity="0.12"/>
-        <circle cx="50" cy="46" r="20" fill="none" stroke="#D9A441" stroke-width="2"/>
-        <path d="M38 46 L46 54 L64 34" fill="none" stroke="#F5F3EE" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-        <line x1="26" y1="80" x2="74" y2="80" stroke="#D9A441" stroke-width="1.5"/>
-        <text x="50" y="94" text-anchor="middle" font-family="Space Mono, monospace" font-size="8" fill="#F5F3EE" letter-spacing="1">IMM</text>
-      </svg>
+      <img class="escudo-hero escudo-img" src="assets/escudo.png" alt="Escudo Instituto Mariano Moreno" style="width:104px;height:auto;filter:drop-shadow(0 6px 18px rgba(0,0,0,.45));">
 
-      <div class="kicker">Instituto Mariano Moreno · Educación Física</div>
+      <div class="kicker" style="color:var(--violeta);">Organización Docentes de Secundaria</div>
       <div>
         <h1 class="titulo-hero display">Interbandos</h1>
         <div class="anio-hero">
@@ -360,10 +385,16 @@
         </div>
       </div>
 
-      <div class="vs-tag">
-        <span class="equipo-chip rojo-chip"><span class="dot"></span>Rojo</span>
+      <div class="vs-patches">
+        <div class="equipo-mini">
+          <span class="patch patch-lg"><img src="assets/rojos.png" alt="Escudo Banda Roja - Rojos"></span>
+          <span class="rojo-label">Rojos</span>
+        </div>
         <span class="vs-x">VS</span>
-        <span class="equipo-chip azul-chip"><span class="dot"></span>Azul</span>
+        <div class="equipo-mini">
+          <span class="patch patch-lg"><img src="assets/azules.png" alt="Escudo Banda Azul - Azules"></span>
+          <span class="azul-label">Azules</span>
+        </div>
       </div>
 
       <p class="subtitulo-hero">Un cuatrimestre, dos bandas, un solo torneo. Seguí capitanes, juegos, deportes y el marcador general rumbo a la gran final.</p>
@@ -374,10 +405,6 @@
       </button>
     </div>
 
-    <div class="scroll-hint" aria-hidden="true">
-      <span>Explorar</span>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6 6-6"/></svg>
-    </div>
   </div>
 </section>
 
@@ -468,7 +495,7 @@
 
   <div class="capitanes-cols">
     <div class="col-equipo col-rojo">
-      <div class="col-equipo-head"><span class="dot"></span><h3>Banda Roja</h3></div>
+      <div class="col-equipo-head"><span class="patch patch-md"><img src="assets/rojos.png" alt="Escudo Rojos"></span><h3>Banda Roja</h3></div>
       <div class="capitan-row">
         <div class="avatar-placeholder">JR</div>
         <div class="capitan-info"><span class="nombre">Juan Ramírez</span><span class="curso">5° año</span></div>
@@ -497,7 +524,7 @@
     </div>
 
     <div class="col-equipo col-azul">
-      <div class="col-equipo-head"><span class="dot"></span><h3>Banda Azul</h3></div>
+      <div class="col-equipo-head"><span class="patch patch-md"><img src="assets/azules.png" alt="Escudo Azules"></span><h3>Banda Azul</h3></div>
       <div class="capitan-row">
         <div class="avatar-placeholder">CA</div>
         <div class="capitan-info"><span class="nombre">Camila Acosta</span><span class="curso">5° año</span></div>
@@ -627,11 +654,13 @@
 
   <div class="vs-bar">
     <div class="lado rojo">
+      <span class="patch patch-sm" style="margin-bottom:6px;"><img src="assets/rojos.png" alt="Escudo Rojos"></span>
       <span class="label">Banda Roja</span>
       <span class="valor mono" id="totalRojo">142</span>
     </div>
     <div class="mid">VS</div>
     <div class="lado azul">
+      <span class="patch patch-sm" style="margin-bottom:6px;"><img src="assets/azules.png" alt="Escudo Azules"></span>
       <span class="label">Banda Azul</span>
       <span class="valor mono" id="totalAzul">128</span>
     </div>
@@ -682,7 +711,11 @@
 
   <div class="final-hero">
     <div class="kicker">Gran cierre · Interbandos 2026</div>
-    <h2 class="display">Rojo vs Azul</h2>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px;">
+      <span class="patch patch-md"><img src="assets/rojos.png" alt="Escudo Rojos"></span>
+      <h2 class="display" style="margin:0;">Rojo vs Azul</h2>
+      <span class="patch patch-md"><img src="assets/azules.png" alt="Escudo Azules"></span>
+    </div>
     <p>Jornada completa con los tres mejores cursos de cada banda, exhibición de atletismo y entrega de copa.</p>
     <div class="final-datos">
       <div class="final-dato"><div class="n mono">14/11</div><div class="l">Fecha</div></div>
