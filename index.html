@@ -349,6 +349,35 @@
   .vs-patches .azul-label{ color:var(--azul); }
 
   .topbar-brand .patch{ width:30px; height:30px; }
+
+  /* ---------- CUENTA REGRESIVA ---------- */
+  .countdown-wrap{
+    display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:4px;
+  }
+  .countdown-wrap .cd-label{
+    font-size:.68rem; letter-spacing:.2em; text-transform:uppercase; color:var(--crema-dim);
+  }
+  .countdown{
+    display:flex; gap:8px;
+  }
+  .countdown .cd-box{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:rgba(139,95,191,.14);
+    border:1px solid rgba(139,95,191,.4);
+    border-radius:10px;
+    padding:8px 10px;
+    min-width:54px;
+  }
+  .countdown .cd-num{
+    font-family:'Space Mono',monospace; font-weight:700;
+    font-size:clamp(1.2rem, 4vw, 1.6rem); color:var(--crema); line-height:1;
+  }
+  .countdown .cd-unit{
+    font-size:.6rem; letter-spacing:.12em; text-transform:uppercase; color:var(--crema-dim); margin-top:2px;
+  }
+  .countdown .cd-sep{ font-family:'Anton',sans-serif; color:var(--violeta); align-self:center; font-size:1.3rem; }
+  .countdown.cd-done .cd-box{ border-color:var(--oro); background:rgba(217,164,65,.14); }
+  .countdown.cd-done .cd-num{ color:var(--oro); }
 </style>
 </head>
 <body>
@@ -398,6 +427,16 @@
       </div>
 
       <p class="subtitulo-hero">Un cuatrimestre, dos bandas, un solo torneo. Seguí capitanes, juegos, deportes y el marcador general rumbo a la gran final.</p>
+
+      <div class="countdown-wrap">
+        <span class="cd-label">Arranca la competencia en</span>
+        <div class="countdown" id="cd-inicio">
+          <div class="cd-box"><span class="cd-num" data-u="d">00</span><span class="cd-unit">Días</span></div>
+          <div class="cd-box"><span class="cd-num" data-u="h">00</span><span class="cd-unit">Hs</span></div>
+          <div class="cd-box"><span class="cd-num" data-u="m">00</span><span class="cd-unit">Min</span></div>
+          <div class="cd-box"><span class="cd-num" data-u="s">00</span><span class="cd-unit">Seg</span></div>
+        </div>
+      </div>
 
       <button class="btn-ingresar" data-nav="menu">
         Ingresar al torneo
@@ -718,10 +757,20 @@
     </div>
     <p>Jornada completa con los tres mejores cursos de cada banda, exhibición de atletismo y entrega de copa.</p>
     <div class="final-datos">
-      <div class="final-dato"><div class="n mono">14/11</div><div class="l">Fecha</div></div>
-      <div class="final-dato"><div class="n mono">08:30</div><div class="l">Inicio</div></div>
+      <div class="final-dato"><div class="n mono">12/11</div><div class="l">Fecha</div></div>
+      <div class="final-dato"><div class="n mono">09:00</div><div class="l">Inicio</div></div>
       <div class="final-dato"><div class="n mono">Predio</div><div class="l">Sede</div></div>
       <div class="final-dato"><div class="n mono">Todos</div><div class="l">Cursos</div></div>
+    </div>
+
+    <div class="countdown-wrap" style="margin-top:24px;">
+      <span class="cd-label">Faltan para la gran final</span>
+      <div class="countdown" id="cd-final">
+        <div class="cd-box"><span class="cd-num" data-u="d">00</span><span class="cd-unit">Días</span></div>
+        <div class="cd-box"><span class="cd-num" data-u="h">00</span><span class="cd-unit">Hs</span></div>
+        <div class="cd-box"><span class="cd-num" data-u="m">00</span><span class="cd-unit">Min</span></div>
+        <div class="cd-box"><span class="cd-num" data-u="s">00</span><span class="cd-unit">Seg</span></div>
+      </div>
     </div>
   </div>
 
@@ -754,7 +803,7 @@
 
   <div class="timeline">
     <div class="timeline-item">
-      <div class="fecha">MARZO</div>
+      <div class="fecha">14 DE SEPTIEMBRE</div>
       <h4>Sorteo de bandas</h4>
       <p>Asignación de alumnos a Rojo y Azul, elección de capitanes por curso.</p>
     </div>
@@ -779,7 +828,7 @@
       <p>Se congela la tabla general y se definen los tres mejores cursos de cada banda.</p>
     </div>
     <div class="timeline-item">
-      <div class="fecha">14 DE NOVIEMBRE</div>
+      <div class="fecha">12 DE NOVIEMBRE</div>
       <h4>Gran final</h4>
       <p>Jornada de cierre con desfile, definiciones y entrega de la copa.</p>
     </div>
@@ -790,6 +839,43 @@
 
 <script>
   (function(){
+    // ------- Cuentas regresivas -------
+    // Editá estas dos fechas con el formato "AAAA-MM-DDTHH:MM:SS"
+    const FECHA_INICIO = new Date("2026-09-14T12:30:00");
+    const FECHA_FINAL  = new Date("2026-11-12T09:00:00");
+
+    function actualizarCountdown(id, fechaObjetivo){
+      const el = document.getElementById(id);
+      if(!el) return;
+      const ahora = new Date();
+      let diff = fechaObjetivo - ahora;
+
+      if(diff <= 0){
+        el.classList.add('cd-done');
+        el.querySelector('[data-u="d"]').textContent = '00';
+        el.querySelector('[data-u="h"]').textContent = '00';
+        el.querySelector('[data-u="m"]').textContent = '00';
+        el.querySelector('[data-u="s"]').textContent = '00';
+        return;
+      }
+      const dias = Math.floor(diff / (1000*60*60*24));
+      const horas = Math.floor((diff / (1000*60*60)) % 24);
+      const min = Math.floor((diff / (1000*60)) % 60);
+      const seg = Math.floor((diff / 1000) % 60);
+
+      el.querySelector('[data-u="d"]').textContent = String(dias).padStart(2,'0');
+      el.querySelector('[data-u="h"]').textContent = String(horas).padStart(2,'0');
+      el.querySelector('[data-u="m"]').textContent = String(min).padStart(2,'0');
+      el.querySelector('[data-u="s"]').textContent = String(seg).padStart(2,'0');
+    }
+
+    function tickCountdowns(){
+      actualizarCountdown('cd-inicio', FECHA_INICIO);
+      actualizarCountdown('cd-final', FECHA_FINAL);
+    }
+    tickCountdowns();
+    setInterval(tickCountdowns, 1000);
+
     const vistas = document.querySelectorAll('.vista');
     const topbar = document.getElementById('topbar');
     const topbarTitle = document.getElementById('topbarTitle');
