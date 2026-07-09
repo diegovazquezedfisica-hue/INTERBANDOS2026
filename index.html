@@ -535,6 +535,7 @@
   <div class="capitanes-cols">
     <div class="col-equipo col-rojo">
       <div class="col-equipo-head"><span class="patch patch-md"><img src="rojos.png" alt="Escudo Rojos"></span><h3>Banda Roja</h3></div>
+      <div id="lista-capitanes-rojo">
       <div class="capitan-row">
         <div class="avatar-placeholder">JR</div>
         <div class="capitan-info"><span class="nombre">Juan Ramírez</span><span class="curso">5° año</span></div>
@@ -560,10 +561,12 @@
         <div class="capitan-info"><span class="nombre">Tomás Díaz</span><span class="curso">1° año</span></div>
         <span class="badge-rol">Referente</span>
       </div>
+      </div>
     </div>
 
     <div class="col-equipo col-azul">
       <div class="col-equipo-head"><span class="patch patch-md"><img src="azules.png" alt="Escudo Azules"></span><h3>Banda Azul</h3></div>
+      <div id="lista-capitanes-azul">
       <div class="capitan-row">
         <div class="avatar-placeholder">CA</div>
         <div class="capitan-info"><span class="nombre">Camila Acosta</span><span class="curso">5° año</span></div>
@@ -588,6 +591,7 @@
         <div class="avatar-placeholder">AI</div>
         <div class="capitan-info"><span class="nombre">Abril Ibáñez</span><span class="curso">1° año</span></div>
         <span class="badge-rol">Referente</span>
+      </div>
       </div>
     </div>
   </div>
@@ -714,7 +718,7 @@
     <div class="tabla-wrap">
       <table class="tabla-puntos">
         <thead><tr><th>Instancia</th><th>Rojo</th><th>Azul</th></tr></thead>
-        <tbody>
+        <tbody id="tbody-puntos-general">
           <tr><td>Deportes</td><td class="pts-r">72</td><td class="pts-a">68</td></tr>
           <tr><td>Juegos</td><td class="pts-r">45</td><td class="pts-a">40</td></tr>
           <tr><td>Aliento y banderas</td><td class="pts-r">7</td><td class="pts-a">8</td></tr>
@@ -728,7 +732,7 @@
     <div class="tabla-wrap">
       <table class="tabla-puntos">
         <thead><tr><th>Curso</th><th>Rojo</th><th>Azul</th></tr></thead>
-        <tbody>
+        <tbody id="tbody-puntos-curso">
           <tr><td>1° año</td><td class="pts-r">18</td><td class="pts-a">22</td></tr>
           <tr><td>2° año</td><td class="pts-r">26</td><td class="pts-a">19</td></tr>
           <tr><td>3° año</td><td class="pts-r">31</td><td class="pts-a">24</td></tr>
@@ -801,7 +805,7 @@
     <p>Recorrido del torneo desde el sorteo de bandas hasta la premiación final.</p>
   </div>
 
-  <div class="timeline">
+  <div class="timeline" id="timeline-container">
     <div class="timeline-item">
       <div class="fecha">14 DE SEPTIEMBRE</div>
       <h4>Sorteo de bandas</h4>
@@ -839,6 +843,81 @@
 
 <script>
   (function(){
+    // ------- Conexión con Google Sheet (via Cloudflare Worker) -------
+    // Reemplazá esta URL por la de tu Worker una vez desplegado.
+    const WORKER_URL = "https://interbandos-proxy.TU-USUARIO.workers.dev";
+    const TOKEN = "DRL194749";
+
+    function iniciales(nombre){
+      return (nombre || "").trim().split(/\s+/).slice(0,2).map(p => p[0]).join("").toUpperCase();
+    }
+
+    async function pedirDatos(accion){
+      const url = `${WORKER_URL}?action=${accion}&token=${TOKEN}`;
+      const resp = await fetch(url);
+      if(!resp.ok) throw new Error("Respuesta no OK: " + resp.status);
+      const data = await resp.json();
+      if(data.error) throw new Error(data.error);
+      return data;
+    }
+
+    function pintarCapitanes(banda, contenedorId){
+      const cont = document.getElementById(contenedorId);
+      if(!cont || !banda || !banda.length) return;
+      cont.innerHTML = banda.map(c => `
+        <div class="capitan-row">
+          <div class="avatar-placeholder">${iniciales(c.nombre)}</div>
+          <div class="capitan-info"><span class="nombre">${c.nombre || ""}</span><span class="curso">${c.curso || ""}</span></div>
+          <span class="badge-rol">${c.rol || "Referente"}</span>
+        </div>
+      `).join("");
+    }
+
+    function pintarPuntos(data){
+      if(!data) return;
+      if(data.general && data.general.length){
+        document.getElementById("tbody-puntos-general").innerHTML = data.general.map(f => `
+          <tr><td>${f.instancia || ""}</td><td class="pts-r">${f.rojo ?? 0}</td><td class="pts-a">${f.azul ?? 0}</td></tr>
+        `).join("");
+      }
+      if(data.curso && data.curso.length){
+        document.getElementById("tbody-puntos-curso").innerHTML = data.curso.map(f => `
+          <tr><td>${f.curso || ""}</td><td class="pts-r">${f.rojo ?? 0}</td><td class="pts-a">${f.azul ?? 0}</td></tr>
+        `).join("");
+      }
+      const totalRojo = data.totalRojo ?? (data.general || []).reduce((s,f) => s + (Number(f.rojo)||0), 0);
+      const totalAzul = data.totalAzul ?? (data.general || []).reduce((s,f) => s + (Number(f.azul)||0), 0);
+      document.getElementById("totalRojo").textContent = totalRojo;
+      document.getElementById("totalAzul").textContent = totalAzul;
+    }
+
+    function pintarCronograma(items){
+      const cont = document.getElementById("timeline-container");
+      if(!cont || !items || !items.length) return;
+      cont.innerHTML = items.map(it => `
+        <div class="timeline-item">
+          <div class="fecha">${(it.fecha || "").toString().toUpperCase()}</div>
+          <h4>${it.titulo || ""}</h4>
+          <p>${it.descripcion || ""}</p>
+        </div>
+      `).join("");
+    }
+
+    async function cargarDatosDelSheet(){
+      try{
+        const todo = await pedirDatos("todo");
+        if(todo.capitanes){
+          pintarCapitanes(todo.capitanes.rojo, "lista-capitanes-rojo");
+          pintarCapitanes(todo.capitanes.azul, "lista-capitanes-azul");
+        }
+        if(todo.puntos) pintarPuntos(todo.puntos);
+        if(todo.cronograma) pintarCronograma(todo.cronograma);
+      }catch(err){
+        console.warn("No se pudo conectar con el Sheet, se mantiene el contenido de ejemplo.", err);
+      }
+    }
+    cargarDatosDelSheet();
+
     // ------- Cuentas regresivas -------
     // Editá estas dos fechas con el formato "AAAA-MM-DDTHH:MM:SS"
     const FECHA_INICIO = new Date("2026-09-14T12:30:00");
