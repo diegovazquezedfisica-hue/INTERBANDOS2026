@@ -1,4 +1,4 @@
-const CACHE_NAME = "interbandos-2026-v2";
+const CACHE_NAME = "interbandos-2026-v3";
 const ARCHIVOS_CORE = [
   "./",
   "./index.html",
@@ -28,22 +28,20 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+// Estrategia NETWORK-FIRST: siempre intenta traer la version mas nueva de internet.
+// Solo usa la copia guardada si no hay conexion (modo offline).
+// Asi la app nunca vuelve a mostrar una version vieja mientras haya internet.
 self.addEventListener("fetch", (event) => {
   // Nunca cachear los pedidos al Worker/Sheet: siempre tienen que ir a buscar datos frescos
   if (event.request.url.includes("workers.dev")) return;
 
   event.respondWith(
-    caches.match(event.request).then((cacheado) => {
-      return (
-        cacheado ||
-        fetch(event.request)
-          .then((respuesta) => {
-            const copia = respuesta.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copia));
-            return respuesta;
-          })
-          .catch(() => cacheado)
-      );
-    })
+    fetch(event.request)
+      .then((respuesta) => {
+        const copia = respuesta.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copia));
+        return respuesta;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
