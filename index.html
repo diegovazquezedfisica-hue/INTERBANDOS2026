@@ -386,7 +386,7 @@
   .countdown.cd-done .cd-box{ border-color:var(--oro); background:rgba(217,164,65,.14); }
   .countdown.cd-done .cd-num{ color:var(--oro); }
 
-  /* ---------- DEPORTES: acordeon por deporte + grilla curso x categoria ---------- */
+  /* ---------- DEPORTES: acordeon por deporte + pestañas de curso + partidos editables ---------- */
   .deportes-lista{ display:flex; flex-direction:column; gap:12px; }
   .deporte-acc{
     background:var(--neg-2); border:1px solid rgba(245,243,238,.09); border-radius:var(--radius);
@@ -404,26 +404,44 @@
   .deporte-acc .chev{ width:16px; height:16px; color:var(--crema-dim); transition:transform .3s var(--ease); flex-shrink:0; }
   .deporte-acc.abierto .chev{ transform:rotate(180deg); }
   .deporte-acc-body{
-    max-height:0; overflow:hidden; transition:max-height .35s var(--ease);
+    max-height:0; overflow:hidden; transition:max-height .4s var(--ease);
   }
-  .deporte-acc.abierto .deporte-acc-body{ max-height:900px; }
-  .deporte-acc-body-inner{ padding:0 18px 18px; overflow-x:auto; }
-  .tabla-deporte{ width:100%; border-collapse:collapse; font-size:.86rem; min-width:460px; }
-  .tabla-deporte th, .tabla-deporte td{ padding:9px 8px; text-align:center; border-bottom:1px solid rgba(245,243,238,.07); }
-  .tabla-deporte th{ font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--crema-dim); font-weight:600; }
-  .tabla-deporte td:first-child, .tabla-deporte th:first-child{ text-align:left; padding-left:2px; font-weight:700; }
-  .celda-vs{ font-family:'Space Mono',monospace; }
-  .celda-vs .cr{ color:var(--rojo); font-weight:700; }
-  .celda-vs .ca{ color:var(--azul); font-weight:700; }
-  .celda-vs .sep{ color:var(--crema-dim); margin:0 3px; }
-  .celda-vs.vacia{ color:rgba(245,243,238,.25); }
-  .celda-vs .pill{
-    display:inline-block; margin-left:6px; font-size:.62rem; padding:1px 6px; border-radius:999px;
-    background:rgba(217,164,65,.15); color:var(--oro); vertical-align:middle;
+  .deporte-acc.abierto .deporte-acc-body{ max-height:2400px; }
+  .deporte-acc-body-inner{ padding:0 16px 18px; }
+
+  .curso-tabs{ display:flex; gap:6px; overflow-x:auto; padding:2px 0 12px; -webkit-overflow-scrolling:touch; }
+  .curso-tab{
+    flex-shrink:0; padding:7px 15px; border-radius:999px; font-size:.78rem; font-weight:700;
+    background:var(--neg); border:1px solid rgba(245,243,238,.12); color:var(--crema-dim);
   }
+  .curso-tab.activo{ background:var(--violeta); color:var(--crema); border-color:var(--violeta); }
+
+  .bloques-grid{ display:grid; grid-template-columns:1fr; gap:8px; }
+  @media(min-width:560px){ .bloques-grid{ grid-template-columns:1fr 1fr; } }
+  .match-cell{
+    background:var(--neg); border:1px solid rgba(245,243,238,.08); border-radius:10px;
+    padding:10px 10px 12px; display:flex; flex-direction:column; gap:8px;
+  }
+  .match-cell-label{ font-size:.66rem; letter-spacing:.06em; text-transform:uppercase; color:var(--crema-dim); text-align:center; }
+  .match-cell-score{ display:flex; align-items:center; justify-content:center; gap:12px; }
+  .lado-marcador{ display:flex; align-items:center; gap:6px; }
+  .btn-marcador{
+    width:26px; height:26px; border-radius:8px; background:rgba(245,243,238,.08);
+    font-weight:800; font-size:1rem; display:flex; align-items:center; justify-content:center;
+    line-height:1; transition:transform .12s var(--ease), background .12s var(--ease);
+  }
+  .btn-marcador:active{ transform:scale(.88); background:rgba(245,243,238,.16); }
+  .lado-marcador.rojo .btn-marcador{ color:var(--rojo); }
+  .lado-marcador.azul .btn-marcador{ color:var(--azul); }
+  .valor-marcador{ font-family:'Space Mono',monospace; font-weight:700; font-size:1.15rem; min-width:18px; text-align:center; }
+  .lado-marcador.rojo .valor-marcador{ color:var(--rojo); }
+  .lado-marcador.azul .valor-marcador{ color:var(--azul); }
+  .sep-marcador{ color:var(--crema-dim); font-family:'Anton',sans-serif; font-size:.9rem; }
+  .match-cell.tocado{ border-color:rgba(217,164,65,.35); }
 </style>
 </head>
 <body>
+
 
 <!-- ============ TOP BAR ============ -->
 <div class="topbar hidden" id="topbar">
@@ -854,20 +872,29 @@
 
 <script>
   (function(){
-    // ------- Deportes: acordeon curso x categoria -------
+    // ------- Deportes: acordeon > pestañas de curso > 4 bloques x 3 categorias, editable con +/- -------
     const DEPORTES = ["Básquet 3x3", "Fútbol", "Handball", "Softbol", "Vóley", "Atletismo"];
     const CURSOS = ["1° año", "2° año", "3° año", "4° año", "5° año", "6° año"];
     const CATEGORIAS = ["varones", "mujeres", "mixto"];
+    const BLOQUES = [1, 2, 3, 4];
     const LABEL_CATEGORIA = { varones: "Varones", mujeres: "Mujeres", mixto: "Mixto" };
 
-    function calcularPuntosPartido(golesRojo, golesAzul){
-      if (golesRojo === "" || golesAzul === "" || golesRojo === undefined || golesAzul === undefined || golesRojo === null || golesAzul === null) {
-        return null;
-      }
-      const gr = Number(golesRojo), ga = Number(golesAzul);
-      if (isNaN(gr) || isNaN(ga)) return null;
-      if (gr > ga) return { rojo: 15, azul: 5 };
-      if (ga > gr) return { rojo: 5, azul: 15 };
+    // Estado en memoria: estadoPartidos[deporte][curso][bloque][categoria] = {rojo, azul, tocado}
+    const estadoPartidos = {};
+
+    function obtenerCelda(deporte, curso, bloque, categoria){
+      estadoPartidos[deporte] = estadoPartidos[deporte] || {};
+      estadoPartidos[deporte][curso] = estadoPartidos[deporte][curso] || {};
+      estadoPartidos[deporte][curso][bloque] = estadoPartidos[deporte][curso][bloque] || {};
+      estadoPartidos[deporte][curso][bloque][categoria] = estadoPartidos[deporte][curso][bloque][categoria] || { rojo: 0, azul: 0, tocado: false };
+      return estadoPartidos[deporte][curso][bloque][categoria];
+    }
+
+    // 15 al que gana, 10 y 10 si empatan, 5 al que pierde. Null si el partido no se jugó todavía.
+    function puntosDeCelda(c){
+      if(!c || !c.tocado) return null;
+      if(c.rojo > c.azul) return { rojo: 15, azul: 5 };
+      if(c.azul > c.rojo) return { rojo: 5, azul: 15 };
       return { rojo: 10, azul: 10 };
     }
 
@@ -879,77 +906,150 @@
           <button class="deporte-acc-head" type="button">
             <span class="deporte-acc-nombre">${deporte}</span>
             <span class="deporte-acc-totales">
-              <span class="tr" data-total-rojo>–</span>
+              <span class="tr" data-total-rojo>0</span>
               <span style="color:var(--crema-dim);">vs</span>
-              <span class="ta" data-total-azul>–</span>
+              <span class="ta" data-total-azul>0</span>
               <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
             </span>
           </button>
           <div class="deporte-acc-body">
             <div class="deporte-acc-body-inner">
-              <table class="tabla-deporte">
-                <thead><tr><th>Curso</th><th>Varones</th><th>Mujeres</th><th>Mixto</th></tr></thead>
-                <tbody>
-                  ${CURSOS.map(curso => `
-                    <tr data-curso="${curso}">
-                      <td>${curso.replace(" año","")}</td>
-                      ${CATEGORIAS.map(cat => `<td class="celda-vs vacia" data-cat="${cat}">–</td>`).join("")}
-                    </tr>
-                  `).join("")}
-                </tbody>
-              </table>
+              <div class="curso-tabs">
+                ${CURSOS.map((curso, ci) => `<button class="curso-tab${ci === 0 ? ' activo' : ''}" type="button" data-curso="${curso}">${curso.replace(" año","°")}</button>`).join("")}
+              </div>
+              <div class="bloques-grid" data-curso-activo="${CURSOS[0]}"></div>
             </div>
           </div>
         </div>
       `).join("");
 
-      // Toggle acordeon
-      cont.querySelectorAll(".deporte-acc-head").forEach(head => {
+      // Abrir/cerrar cada deporte, renderizando la grilla recien la primera vez que se abre
+      cont.querySelectorAll(".deporte-acc").forEach(bloqueDeporte => {
+        const head = bloqueDeporte.querySelector(".deporte-acc-head");
+        const grid = bloqueDeporte.querySelector(".bloques-grid");
         head.addEventListener("click", () => {
-          head.closest(".deporte-acc").classList.toggle("abierto");
+          const seAbre = !bloqueDeporte.classList.contains("abierto");
+          bloqueDeporte.classList.toggle("abierto");
+          if(seAbre && !grid.dataset.render){
+            renderGrid(bloqueDeporte.dataset.deporte, grid.dataset.cursoActivo, grid);
+            grid.dataset.render = "1";
+          }
+        });
+        if(bloqueDeporte.classList.contains("abierto")){
+          renderGrid(bloqueDeporte.dataset.deporte, grid.dataset.cursoActivo, grid);
+          grid.dataset.render = "1";
+        }
+
+        bloqueDeporte.querySelectorAll(".curso-tab").forEach(tab => {
+          tab.addEventListener("click", () => {
+            bloqueDeporte.querySelectorAll(".curso-tab").forEach(t => t.classList.remove("activo"));
+            tab.classList.add("activo");
+            grid.dataset.cursoActivo = tab.dataset.curso;
+            renderGrid(bloqueDeporte.dataset.deporte, tab.dataset.curso, grid);
+          });
         });
       });
     }
 
-    function pintarDeportes(filas){
+    function renderGrid(deporte, curso, grid){
+      grid.innerHTML = BLOQUES.map(bloque => CATEGORIAS.map(categoria => {
+        const c = obtenerCelda(deporte, curso, bloque, categoria);
+        return `
+          <div class="match-cell${c.tocado ? ' tocado' : ''}" data-deporte="${deporte}" data-curso="${curso}" data-bloque="${bloque}" data-categoria="${categoria}">
+            <div class="match-cell-label">Bloque ${bloque} · ${LABEL_CATEGORIA[categoria]}</div>
+            <div class="match-cell-score">
+              <div class="lado-marcador rojo">
+                <button class="btn-marcador" type="button" data-accion="restar" data-color="rojo">–</button>
+                <span class="valor-marcador" data-color="rojo">${c.rojo}</span>
+                <button class="btn-marcador" type="button" data-accion="sumar" data-color="rojo">+</button>
+              </div>
+              <span class="sep-marcador">–</span>
+              <div class="lado-marcador azul">
+                <button class="btn-marcador" type="button" data-accion="restar" data-color="azul">–</button>
+                <span class="valor-marcador" data-color="azul">${c.azul}</span>
+                <button class="btn-marcador" type="button" data-accion="sumar" data-color="azul">+</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("")).join("");
+
+      grid.querySelectorAll(".btn-marcador").forEach(btn => {
+        btn.addEventListener("click", () => onClickMarcador(btn));
+      });
+    }
+
+    function actualizarTotalDeporte(deporte){
+      const bloqueDeporte = document.querySelector(`.deporte-acc[data-deporte="${deporte}"]`);
+      if(!bloqueDeporte) return;
+      let totalRojo = 0, totalAzul = 0;
+      const porCurso = estadoPartidos[deporte] || {};
+      Object.values(porCurso).forEach(porBloque => {
+        Object.values(porBloque).forEach(porCategoria => {
+          Object.values(porCategoria).forEach(celda => {
+            const pts = puntosDeCelda(celda);
+            if(pts){ totalRojo += pts.rojo; totalAzul += pts.azul; }
+          });
+        });
+      });
+      const elR = bloqueDeporte.querySelector("[data-total-rojo]");
+      const elA = bloqueDeporte.querySelector("[data-total-azul]");
+      if(elR) elR.textContent = totalRojo;
+      if(elA) elA.textContent = totalAzul;
+    }
+
+    async function onClickMarcador(btn){
+      const cell = btn.closest(".match-cell");
+      const { deporte, curso, bloque, categoria } = cell.dataset;
+      const color = btn.dataset.color;
+      const delta = btn.dataset.accion === "sumar" ? 1 : -1;
+
+      const c = obtenerCelda(deporte, curso, bloque, categoria);
+      const nuevo = Math.max(0, c[color] + delta);
+      if(nuevo === c[color] && c.tocado) return; // no bajar de 0 si ya estaba en 0
+      c[color] = nuevo;
+      c.tocado = true;
+
+      cell.classList.add("tocado");
+      const valorEl = cell.querySelector(`.valor-marcador[data-color="${color}"]`);
+      if(valorEl) valorEl.textContent = nuevo;
+
+      actualizarTotalDeporte(deporte);
+
+      // Guardar en el Sheet (silencioso: si falla, el cambio ya quedo local y se reintentará en el próximo click)
+      try{
+        const url = `${WORKER_URL}?action=actualizarMarcador&token=${TOKEN}`
+          + `&deporte=${encodeURIComponent(deporte)}&curso=${encodeURIComponent(curso)}`
+          + `&bloque=${encodeURIComponent(bloque)}&categoria=${encodeURIComponent(categoria)}`
+          + `&campo=${color}&delta=${delta}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if(data.error) console.warn("Error guardando marcador en el Sheet:", data.error);
+      }catch(err){
+        console.warn("No se pudo guardar el marcador en el Sheet (queda guardado localmente):", err);
+      }
+    }
+
+    function cargarEstadoDeportesDesdeSheet(filas){
       if(!filas || !filas.length) return;
-      const cont = document.getElementById("deportes-lista");
-      if(!cont) return;
-
-      const totales = {};
-
       filas.forEach(f => {
         const deporte = (f.deporte || "").toString().trim();
         const curso = (f.curso || "").toString().trim();
+        const bloque = (f.bloque || "").toString().trim();
         const categoria = (f.categoria || "").toString().trim().toLowerCase();
-        const pts = calcularPuntosPartido(f.goles_rojo ?? f.golesrojo, f.goles_azul ?? f.golesazul);
-
-        const bloque = cont.querySelector(`.deporte-acc[data-deporte="${deporte}"]`);
-        if(!bloque) return;
-        const fila = bloque.querySelector(`tr[data-curso="${curso}"]`);
-        if(!fila) return;
-        const celda = fila.querySelector(`td[data-cat="${categoria}"]`);
-        if(!celda) return;
-
-        const gr = f.goles_rojo ?? f.golesrojo, ga = f.goles_azul ?? f.golesazul;
-        if(gr !== undefined && gr !== "" && gr !== null && ga !== undefined && ga !== "" && ga !== null){
-          celda.classList.remove("vacia");
-          celda.innerHTML = `<span class="cr">${gr}</span><span class="sep">-</span><span class="ca">${ga}</span>`;
-          if(pts) celda.innerHTML += `<span class="pill">${pts.rojo === pts.azul ? "Empate" : (pts.rojo > pts.azul ? "Gana Rojo" : "Gana Azul")}</span>`;
-        }
-
-        if(pts){
-          totales[deporte] = totales[deporte] || { rojo: 0, azul: 0 };
-          totales[deporte].rojo += pts.rojo;
-          totales[deporte].azul += pts.azul;
-        }
+        if(!deporte || !curso || !bloque || !categoria) return;
+        const c = obtenerCelda(deporte, curso, bloque, categoria);
+        c.rojo = Number(f.goles_rojo) || 0;
+        c.azul = Number(f.goles_azul) || 0;
+        c.tocado = true;
       });
 
-      Object.keys(totales).forEach(deporte => {
-        const bloque = cont.querySelector(`.deporte-acc[data-deporte="${deporte}"]`);
-        if(!bloque) return;
-        bloque.querySelector("[data-total-rojo]").textContent = totales[deporte].rojo;
-        bloque.querySelector("[data-total-azul]").textContent = totales[deporte].azul;
+      DEPORTES.forEach(actualizarTotalDeporte);
+
+      // Si alguna grilla ya estaba renderizada en pantalla, la volvemos a pintar con los datos reales
+      document.querySelectorAll('.bloques-grid[data-render]').forEach(grid => {
+        const deporte = grid.closest(".deporte-acc").dataset.deporte;
+        renderGrid(deporte, grid.dataset.cursoActivo, grid);
       });
     }
 
@@ -1024,7 +1124,7 @@
         }
         if(todo.puntos) pintarPuntos(todo.puntos);
         if(todo.cronograma) pintarCronograma(todo.cronograma);
-        if(todo.deportes) pintarDeportes(todo.deportes);
+        if(todo.deportes) cargarEstadoDeportesDesdeSheet(todo.deportes);
       }catch(err){
         console.warn("No se pudo conectar con el Sheet, se mantiene el contenido de ejemplo.", err);
       }
