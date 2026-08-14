@@ -454,6 +454,18 @@
   .bandos-listado-titulo h3{ font-family:'Anton',sans-serif; letter-spacing:.02em; font-size:1.35rem; text-transform:uppercase; }
   .bandos-listado-vacio{ color:var(--crema-dim); font-size:.9rem; padding:20px; text-align:center; background:var(--neg-2); border-radius:var(--radius); border:1px dashed rgba(245,243,238,.15); }
   #bandos-listado-cont .capitan-row{ padding:11px 4px; }
+  .curso-subgrupo{ margin-bottom:22px; }
+  .curso-subgrupo:last-child{ margin-bottom:0; }
+  .curso-subgrupo-titulo{
+    display:flex; align-items:center; gap:8px;
+    font-family:'Space Mono',monospace; font-weight:700; font-size:.82rem; letter-spacing:.04em;
+    color:var(--oro); text-transform:uppercase;
+    padding-bottom:6px; margin-bottom:4px; border-bottom:1px solid rgba(217,164,65,.25);
+  }
+  .curso-subgrupo-count{
+    font-size:.68rem; color:var(--crema-dim); background:rgba(245,243,238,.08);
+    padding:1px 7px; border-radius:999px; font-weight:600;
+  }
 </style>
 </head>
 <body>
@@ -969,6 +981,18 @@
       });
     }
 
+    function agruparPorCurso(alumnos){
+      const grupos = {};
+      alumnos.forEach(a => {
+        const key = (a.curso || "Sin curso").toString().trim();
+        grupos[key] = grupos[key] || [];
+        grupos[key].push(a);
+      });
+      return Object.keys(grupos)
+        .sort((a, b) => a.localeCompare(b, "es", { numeric: true }))
+        .map(curso => ({ curso, alumnos: grupos[curso] }));
+    }
+
     function renderListadoBandos(){
       const titulo = document.getElementById("bandos-listado-titulo");
       const cont = document.getElementById("bandos-listado-cont");
@@ -981,11 +1005,17 @@
         cont.innerHTML = `<div class="bandos-listado-vacio">Todavía no hay alumnos cargados para este ciclo.</div>`;
         return;
       }
-      cont.innerHTML = alumnos.map(a => `
-        <div class="capitan-row">
-          <div class="avatar-placeholder">${iniciales(a.nombre)}</div>
-          <div class="capitan-info"><span class="nombre">${a.nombre || ""}</span><span class="curso">${a.curso || ""}</span></div>
-          <span class="badge-rol">${a.genero || ""}</span>
+      const grupos = agruparPorCurso(alumnos);
+      cont.innerHTML = grupos.map(g => `
+        <div class="curso-subgrupo">
+          <div class="curso-subgrupo-titulo">${g.curso} <span class="curso-subgrupo-count">${g.alumnos.length}</span></div>
+          ${g.alumnos.map(a => `
+            <div class="capitan-row">
+              <div class="avatar-placeholder">${iniciales(a.nombre)}</div>
+              <div class="capitan-info"><span class="nombre">${a.nombre || ""}</span></div>
+              <span class="badge-rol">${a.genero || ""}</span>
+            </div>
+          `).join("")}
         </div>
       `).join("");
     }
