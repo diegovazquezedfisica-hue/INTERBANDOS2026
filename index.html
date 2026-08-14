@@ -542,12 +542,12 @@
 
       <div class="vs-patches">
         <div class="equipo-mini">
-          <span class="patch patch-lg"><img src="rojos.png" alt="Escudo Banda Roja - Rojos"></span>
+          <span class="patch patch-lg"><img src="rojos.png" alt="Escudo Bando Rojo - Rojos"></span>
           <span class="rojo-label">Rojos</span>
         </div>
         <span class="vs-x">VS</span>
         <div class="equipo-mini">
-          <span class="patch patch-lg"><img src="azules.png" alt="Escudo Banda Azul - Azules"></span>
+          <span class="patch patch-lg"><img src="azules.png" alt="Escudo Bando Azul - Azules"></span>
           <span class="azul-label">Azules</span>
         </div>
       </div>
@@ -669,7 +669,7 @@
 
   <div class="capitanes-cols">
     <div class="col-equipo col-rojo">
-      <div class="col-equipo-head"><span class="patch patch-md"><img src="rojos.png" alt="Escudo Rojos"></span><h3>Banda Roja</h3></div>
+      <div class="col-equipo-head"><span class="patch patch-md"><img src="rojos.png" alt="Escudo Rojos"></span><h3>Bando Rojo</h3></div>
       <div id="lista-capitanes-rojo">
       <div class="capitan-row">
         <div class="avatar-placeholder">JR</div>
@@ -700,7 +700,7 @@
     </div>
 
     <div class="col-equipo col-azul">
-      <div class="col-equipo-head"><span class="patch patch-md"><img src="azules.png" alt="Escudo Azules"></span><h3>Banda Azul</h3></div>
+      <div class="col-equipo-head"><span class="patch patch-md"><img src="azules.png" alt="Escudo Azules"></span><h3>Bando Azul</h3></div>
       <div id="lista-capitanes-azul">
       <div class="capitan-row">
         <div class="avatar-placeholder">CA</div>
@@ -803,13 +803,13 @@
   <div class="vs-bar">
     <div class="lado rojo">
       <span class="patch patch-sm" style="margin-bottom:6px;"><img src="rojos.png" alt="Escudo Rojos"></span>
-      <span class="label">Banda Roja</span>
+      <span class="label">Bando Rojo</span>
       <span class="valor mono" id="totalRojo">142</span>
     </div>
     <div class="mid">VS</div>
     <div class="lado azul">
       <span class="patch patch-sm" style="margin-bottom:6px;"><img src="azules.png" alt="Escudo Azules"></span>
-      <span class="label">Banda Azul</span>
+      <span class="label">Bando Azul</span>
       <span class="valor mono" id="totalAzul">128</span>
     </div>
   </div>
@@ -956,11 +956,11 @@
     <div class="menu-grid">
       <button class="menu-card bandos-color-card" type="button" data-color="rojo">
         <span class="patch patch-lg"><img src="rojos.png" alt="Escudo Rojos"></span>
-        <h3 style="color:var(--rojo);">Banda Roja</h3>
+        <h3 style="color:var(--rojo);">Bando Rojo</h3>
       </button>
       <button class="menu-card bandos-color-card" type="button" data-color="azul">
         <span class="patch patch-lg"><img src="azules.png" alt="Escudo Azules"></span>
-        <h3 style="color:var(--azul);">Banda Azul</h3>
+        <h3 style="color:var(--azul);">Bando Azul</h3>
       </button>
     </div>
   </div>
@@ -1058,7 +1058,7 @@
     function renderCursosBandos(){
       const titulo = document.getElementById("bandos-curso-titulo");
       const cont = document.getElementById("bandos-curso-cards");
-      const nombreColor = bandosColorActual === "rojo" ? "Banda Roja" : "Banda Azul";
+      const nombreColor = bandosColorActual === "rojo" ? "Bando Rojo" : "Bando Azul";
       const colorVar = bandosColorActual === "rojo" ? "var(--rojo)" : "var(--azul)";
       titulo.innerHTML = `<h3 style="color:${colorVar};">${nombreColor} · ${bandosCicloActual}° Ciclo</h3>`;
 
