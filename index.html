@@ -438,6 +438,22 @@
   .lado-marcador.azul .valor-marcador{ color:var(--azul); }
   .sep-marcador{ color:var(--crema-dim); font-family:'Anton',sans-serif; font-size:.9rem; }
   .match-cell.tocado{ border-color:rgba(217,164,65,.35); }
+
+  /* ---------- BANDOS: elegir color -> elegir ciclo -> listado de alumnos ---------- */
+  .bandos-color-card{ align-items:center; text-align:center; gap:14px; padding:28px 20px; }
+  .bandos-color-card h3{ font-size:1.15rem; }
+  .bandos-ciclo-card{ text-align:left; }
+  .bandos-ciclo-card h3{ font-size:1.05rem; }
+  .bandos-ciclo-card p{ font-size:.82rem; color:var(--crema-dim); margin-top:4px; }
+  .btn-back-interno{
+    display:inline-flex; align-items:center; gap:6px; font-size:.85rem; font-weight:600;
+    color:var(--crema-dim); margin-bottom:18px; padding:6px 0;
+  }
+  .btn-back-interno:hover{ color:var(--oro); }
+  .bandos-listado-titulo{ margin-bottom:14px; }
+  .bandos-listado-titulo h3{ font-family:'Anton',sans-serif; letter-spacing:.02em; font-size:1.35rem; text-transform:uppercase; }
+  .bandos-listado-vacio{ color:var(--crema-dim); font-size:.9rem; padding:20px; text-align:center; background:var(--neg-2); border-radius:var(--radius); border:1px dashed rgba(245,243,238,.15); }
+  #bandos-listado-cont .capitan-row{ padding:11px 4px; }
 </style>
 </head>
 <body>
@@ -580,6 +596,17 @@
       <div>
         <h3>Cronograma</h3>
         <p>Fechas clave desde el sorteo hasta la premiación.</p>
+      </div>
+    </a>
+
+    <a href="#" class="menu-card" data-nav="bandos">
+      <span class="num mono">07</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div>
+        <h3>Bandos</h3>
+        <p>Listado de alumnos por banda y por ciclo.</p>
       </div>
     </a>
   </div>
@@ -868,10 +895,140 @@
   </div>
 </section>
 
+<!-- ============ BANDOS ============ -->
+<section class="vista" id="vista-bandos">
+  <div class="header-vista">
+    <h1 class="display">Bandos</h1>
+    <p>Elegí una banda para ver el listado de alumnos por ciclo.</p>
+  </div>
+
+  <!-- Paso 1: elegir color -->
+  <div id="bandos-paso-color" class="bandos-paso">
+    <div class="menu-grid">
+      <button class="menu-card bandos-color-card" type="button" data-color="rojo">
+        <span class="patch patch-lg"><img src="rojos.png" alt="Escudo Rojos"></span>
+        <h3 style="color:var(--rojo);">Banda Roja</h3>
+      </button>
+      <button class="menu-card bandos-color-card" type="button" data-color="azul">
+        <span class="patch patch-lg"><img src="azules.png" alt="Escudo Azules"></span>
+        <h3 style="color:var(--azul);">Banda Azul</h3>
+      </button>
+    </div>
+  </div>
+
+  <!-- Paso 2: elegir ciclo -->
+  <div id="bandos-paso-ciclo" class="bandos-paso" style="display:none;">
+    <button class="btn-back-interno" type="button" data-volver="color">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+      Elegir otra banda
+    </button>
+    <div class="menu-grid" id="bandos-ciclo-cards"></div>
+  </div>
+
+  <!-- Paso 3: listado de alumnos -->
+  <div id="bandos-paso-listado" class="bandos-paso" style="display:none;">
+    <button class="btn-back-interno" type="button" data-volver="ciclo">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
+      Elegir otro ciclo
+    </button>
+    <div id="bandos-listado-titulo" class="bandos-listado-titulo"></div>
+    <div id="bandos-listado-cont"></div>
+  </div>
+</section>
+
 <footer>Instituto Mariano Moreno · Interbandos 2026</footer>
 
 <script>
   (function(){
+    // ------- Bandos: elegir color -> elegir ciclo -> listado de alumnos -------
+    const BANDOS_DATA = { rojo: { "1": [], "2": [] }, azul: { "1": [], "2": [] } };
+    let bandosColorActual = null;
+    let bandosCicloActual = null;
+
+    function mostrarPasoBandos(paso){
+      document.getElementById("bandos-paso-color").style.display = paso === "color" ? "" : "none";
+      document.getElementById("bandos-paso-ciclo").style.display = paso === "ciclo" ? "" : "none";
+      document.getElementById("bandos-paso-listado").style.display = paso === "listado" ? "" : "none";
+    }
+
+    function renderCiclosBandos(){
+      const cont = document.getElementById("bandos-ciclo-cards");
+      const nombreColor = bandosColorActual === "rojo" ? "Roja" : "Azul";
+      cont.innerHTML = ["1", "2"].map(ciclo => `
+        <button class="menu-card bandos-ciclo-card" type="button" data-ciclo="${ciclo}">
+          <h3>${ciclo}° Ciclo</h3>
+          <p>Banda ${nombreColor} — ${ciclo === "1" ? "1°, 2° y 3° año" : "4°, 5° y 6° año"}</p>
+        </button>
+      `).join("");
+      cont.querySelectorAll(".bandos-ciclo-card").forEach(btn => {
+        btn.addEventListener("click", () => {
+          bandosCicloActual = btn.dataset.ciclo;
+          renderListadoBandos();
+          mostrarPasoBandos("listado");
+        });
+      });
+    }
+
+    function renderListadoBandos(){
+      const titulo = document.getElementById("bandos-listado-titulo");
+      const cont = document.getElementById("bandos-listado-cont");
+      const nombreColor = bandosColorActual === "rojo" ? "Banda Roja" : "Banda Azul";
+      const colorVar = bandosColorActual === "rojo" ? "var(--rojo)" : "var(--azul)";
+      titulo.innerHTML = `<h3 style="color:${colorVar};">${nombreColor} · ${bandosCicloActual}° Ciclo</h3>`;
+
+      const alumnos = (BANDOS_DATA[bandosColorActual] && BANDOS_DATA[bandosColorActual][bandosCicloActual]) || [];
+      if(!alumnos.length){
+        cont.innerHTML = `<div class="bandos-listado-vacio">Todavía no hay alumnos cargados para este ciclo.</div>`;
+        return;
+      }
+      cont.innerHTML = alumnos.map(a => `
+        <div class="capitan-row">
+          <div class="avatar-placeholder">${iniciales(a.nombre)}</div>
+          <div class="capitan-info"><span class="nombre">${a.nombre || ""}</span><span class="curso">${a.curso || ""}</span></div>
+          <span class="badge-rol">${a.genero || ""}</span>
+        </div>
+      `).join("");
+    }
+
+    document.querySelectorAll(".bandos-color-card").forEach(btn => {
+      btn.addEventListener("click", () => {
+        bandosColorActual = btn.dataset.color;
+        renderCiclosBandos();
+        mostrarPasoBandos("ciclo");
+      });
+    });
+
+    document.querySelectorAll("[data-volver]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        mostrarPasoBandos(btn.dataset.volver === "color" ? "color" : "ciclo");
+      });
+    });
+
+    function cargarBandosDesdeSheet(data){
+      if(!data) return;
+      ["rojo", "azul"].forEach(color => {
+        ["1", "2"].forEach(ciclo => {
+          const filas = (data[color] && data[color][ciclo]) || [];
+          BANDOS_DATA[color][ciclo] = filas.map(f => ({
+            nombre: f.nombre || f["nombre y apellido"] || "",
+            curso: f.curso || "",
+            genero: f.genero || f["género"] || ""
+          }));
+        });
+      });
+      // Si ya se estaba viendo un listado, lo refrescamos con los datos reales
+      if(bandosColorActual && bandosCicloActual && document.getElementById("bandos-paso-listado").style.display !== "none"){
+        renderListadoBandos();
+      }
+    }
+
+    // Reset del flujo de Bandos cada vez que se entra a esa sección desde el menú
+    document.querySelector('[data-nav="bandos"]').addEventListener("click", () => {
+      bandosColorActual = null;
+      bandosCicloActual = null;
+      mostrarPasoBandos("color");
+    });
+
     // ------- Deportes: acordeon > pestañas de curso > 4 bloques x 3 categorias, editable con +/- -------
     const DEPORTES = ["Básquet 3x3", "Fútbol", "Handball", "Softbol", "Vóley", "Atletismo"];
     const CURSOS = ["1° año", "2° año", "3° año", "4° año", "5° año", "6° año"];
@@ -1125,6 +1282,7 @@
         if(todo.puntos) pintarPuntos(todo.puntos);
         if(todo.cronograma) pintarCronograma(todo.cronograma);
         if(todo.deportes) cargarEstadoDeportesDesdeSheet(todo.deportes);
+        if(todo.bandos) cargarBandosDesdeSheet(todo.bandos);
       }catch(err){
         console.warn("No se pudo conectar con el Sheet, se mantiene el contenido de ejemplo.", err);
       }
@@ -1173,7 +1331,7 @@
     const topbarTitle = document.getElementById('topbarTitle');
     const titulos = {
       menu:'MENÚ', capitanes:'CAPITANES', juegos:'JUEGOS',
-      deportes:'DEPORTES', puntos:'PUNTOS', final:'FINAL', cronograma:'CRONOGRAMA'
+      deportes:'DEPORTES', puntos:'PUNTOS', final:'FINAL', cronograma:'CRONOGRAMA', bandos:'BANDOS'
     };
 
     function irA(id){
