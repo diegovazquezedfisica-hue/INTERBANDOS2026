@@ -825,49 +825,11 @@
 <!-- ============ JUEGOS ============ -->
 <section class="vista" id="vista-juegos">
   <div class="header-vista">
-    <div class="kicker">Sección 02</div>
     <h1 class="display">Juegos</h1>
-    <p>Dinámicas recreativas que suman puntos extra por curso y por banda.</p>
+    <p>Cada partido reparte puntos según el resultado: <strong style="color:var(--oro);">15 al ganador · 10 y 10 si empatan · 5 al que pierde</strong>.</p>
   </div>
 
-  <div class="cards-grid">
-    <div class="item-card">
-      <span class="tag">Grupal</span>
-      <h4>Posta de relevos</h4>
-      <p>Equipos mixtos por curso compiten en una posta de obstáculos cronometrada.</p>
-      <span class="puntaje mono">+15 pts al ganador</span>
-    </div>
-    <div class="item-card">
-      <span class="tag">Fuerza</span>
-      <h4>Tirón de la soga</h4>
-      <p>Formato eliminación directa entre cursos del mismo ciclo.</p>
-      <span class="puntaje mono">+10 pts al ganador</span>
-    </div>
-    <div class="item-card">
-      <span class="tag">Recreativo</span>
-      <h4>Carrera de embolsados</h4>
-      <p>Individual, clasifican los tres primeros de cada curso.</p>
-      <span class="puntaje mono">+5 / +3 / +1 pts</span>
-    </div>
-    <div class="item-card">
-      <span class="tag">Precisión</span>
-      <h4>Tiro al blanco</h4>
-      <p>Estación libre durante el recreo extendido, puntaje acumulable.</p>
-      <span class="puntaje mono">+1 pt por acierto</span>
-    </div>
-    <div class="item-card">
-      <span class="tag">Grupal</span>
-      <h4>Búsqueda del tesoro</h4>
-      <p>Pistas por banda distribuidas en el patio, gana quien complete el recorrido.</p>
-      <span class="puntaje mono">+12 pts al ganador</span>
-    </div>
-    <div class="item-card">
-      <span class="tag">Show</span>
-      <h4>Aliento y banderas</h4>
-      <p>Puntaje del jurado a la presentación y el aliento de cada banda.</p>
-      <span class="puntaje mono">+8 pts máx.</span>
-    </div>
-  </div>
+  <div class="deportes-lista" id="juegos-lista"></div>
 </section>
 
 <!-- ============ DEPORTES ============ -->
@@ -1319,23 +1281,12 @@
     }
     document.querySelector('[data-nav="bandos"]').addEventListener("click", resetYMostrarBandos);
 
-    // ------- Deportes: acordeon > pestañas de curso > 4 bloques x 3 categorias, editable con +/- -------
-    const DEPORTES = ["Básquet 3x3", "Fútbol", "Handball", "Softbol", "Vóley", "Atletismo"];
+    // ------- Sistema genérico de partidos (Deportes y Juegos comparten esta lógica) -------
+    // Acordeon por item > pestañas de curso > 4 bloques x 3 categorias, editable con +/-
     const CURSOS = ["1° año", "2° año", "3° año", "4° año", "5° año", "6° año"];
     const CATEGORIAS = ["varones", "mujeres", "mixto"];
     const BLOQUES = [1, 2, 3, 4];
     const LABEL_CATEGORIA = { varones: "Varones", mujeres: "Mujeres", mixto: "Mixto" };
-
-    // Estado en memoria: estadoPartidos[deporte][curso][bloque][categoria] = {rojo, azul, tocado}
-    const estadoPartidos = {};
-
-    function obtenerCelda(deporte, curso, bloque, categoria){
-      estadoPartidos[deporte] = estadoPartidos[deporte] || {};
-      estadoPartidos[deporte][curso] = estadoPartidos[deporte][curso] || {};
-      estadoPartidos[deporte][curso][bloque] = estadoPartidos[deporte][curso][bloque] || {};
-      estadoPartidos[deporte][curso][bloque][categoria] = estadoPartidos[deporte][curso][bloque][categoria] || { rojo: 0, azul: 0, tocado: false };
-      return estadoPartidos[deporte][curso][bloque][categoria];
-    }
 
     // 15 al que gana, 10 y 10 si empatan, 5 al que pierde. Null si el partido no se jugó todavía.
     function puntosDeCelda(c){
@@ -1345,162 +1296,187 @@
       return { rojo: 10, azul: 10 };
     }
 
-    function construirAcordeonDeportes(){
-      const cont = document.getElementById("deportes-lista");
-      if(!cont) return;
-      cont.innerHTML = DEPORTES.map((deporte, i) => `
-        <div class="deporte-acc${i === 0 ? ' abierto' : ''}" data-deporte="${deporte}">
-          <button class="deporte-acc-head" type="button">
-            <span class="deporte-acc-nombre">${deporte}</span>
-            <span class="deporte-acc-totales">
-              <span class="tr" data-total-rojo>0</span>
-              <span style="color:var(--crema-dim);">vs</span>
-              <span class="ta" data-total-azul>0</span>
-              <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
-            </span>
-          </button>
-          <div class="deporte-acc-body">
-            <div class="deporte-acc-body-inner">
-              <div class="curso-tabs">
-                ${CURSOS.map((curso, ci) => `<button class="curso-tab${ci === 0 ? ' activo' : ''}" type="button" data-curso="${curso}">${curso.replace(" año","°")}</button>`).join("")}
+    function crearSistemaDePartidos({ items, contenedorId, campoNombre, accionGuardar }){
+      const estado = {}; // estado[item][curso][bloque][categoria] = {rojo, azul, tocado}
+
+      function obtenerCelda(item, curso, bloque, categoria){
+        estado[item] = estado[item] || {};
+        estado[item][curso] = estado[item][curso] || {};
+        estado[item][curso][bloque] = estado[item][curso][bloque] || {};
+        estado[item][curso][bloque][categoria] = estado[item][curso][bloque][categoria] || { rojo: 0, azul: 0, tocado: false };
+        return estado[item][curso][bloque][categoria];
+      }
+
+      function construirAcordeon(){
+        const cont = document.getElementById(contenedorId);
+        if(!cont) return;
+        cont.innerHTML = items.map((item, i) => `
+          <div class="deporte-acc${i === 0 ? ' abierto' : ''}" data-item="${item}">
+            <button class="deporte-acc-head" type="button">
+              <span class="deporte-acc-nombre">${item}</span>
+              <span class="deporte-acc-totales">
+                <span class="tr" data-total-rojo>0</span>
+                <span style="color:var(--crema-dim);">vs</span>
+                <span class="ta" data-total-azul>0</span>
+                <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div class="deporte-acc-body">
+              <div class="deporte-acc-body-inner">
+                <div class="curso-tabs">
+                  ${CURSOS.map((curso, ci) => `<button class="curso-tab${ci === 0 ? ' activo' : ''}" type="button" data-curso="${curso}">${curso.replace(" año","°")}</button>`).join("")}
+                </div>
+                <div class="bloques-grid" data-curso-activo="${CURSOS[0]}"></div>
               </div>
-              <div class="bloques-grid" data-curso-activo="${CURSOS[0]}"></div>
             </div>
           </div>
-        </div>
-      `).join("");
+        `).join("");
 
-      // Abrir/cerrar cada deporte, renderizando la grilla recien la primera vez que se abre
-      cont.querySelectorAll(".deporte-acc").forEach(bloqueDeporte => {
-        const head = bloqueDeporte.querySelector(".deporte-acc-head");
-        const grid = bloqueDeporte.querySelector(".bloques-grid");
-        head.addEventListener("click", () => {
-          const seAbre = !bloqueDeporte.classList.contains("abierto");
-          bloqueDeporte.classList.toggle("abierto");
-          if(seAbre && !grid.dataset.render){
-            renderGrid(bloqueDeporte.dataset.deporte, grid.dataset.cursoActivo, grid);
+        // Abrir/cerrar cada item, renderizando la grilla recien la primera vez que se abre
+        cont.querySelectorAll(".deporte-acc").forEach(bloqueItem => {
+          const head = bloqueItem.querySelector(".deporte-acc-head");
+          const grid = bloqueItem.querySelector(".bloques-grid");
+          head.addEventListener("click", () => {
+            const seAbre = !bloqueItem.classList.contains("abierto");
+            bloqueItem.classList.toggle("abierto");
+            if(seAbre && !grid.dataset.render){
+              renderGrid(bloqueItem.dataset.item, grid.dataset.cursoActivo, grid);
+              grid.dataset.render = "1";
+            }
+          });
+          if(bloqueItem.classList.contains("abierto")){
+            renderGrid(bloqueItem.dataset.item, grid.dataset.cursoActivo, grid);
             grid.dataset.render = "1";
           }
-        });
-        if(bloqueDeporte.classList.contains("abierto")){
-          renderGrid(bloqueDeporte.dataset.deporte, grid.dataset.cursoActivo, grid);
-          grid.dataset.render = "1";
-        }
 
-        bloqueDeporte.querySelectorAll(".curso-tab").forEach(tab => {
-          tab.addEventListener("click", () => {
-            bloqueDeporte.querySelectorAll(".curso-tab").forEach(t => t.classList.remove("activo"));
-            tab.classList.add("activo");
-            grid.dataset.cursoActivo = tab.dataset.curso;
-            renderGrid(bloqueDeporte.dataset.deporte, tab.dataset.curso, grid);
+          bloqueItem.querySelectorAll(".curso-tab").forEach(tab => {
+            tab.addEventListener("click", () => {
+              bloqueItem.querySelectorAll(".curso-tab").forEach(t => t.classList.remove("activo"));
+              tab.classList.add("activo");
+              grid.dataset.cursoActivo = tab.dataset.curso;
+              renderGrid(bloqueItem.dataset.item, tab.dataset.curso, grid);
+            });
           });
         });
-      });
-    }
+      }
 
-    function renderGrid(deporte, curso, grid){
-      grid.innerHTML = BLOQUES.map(bloque => CATEGORIAS.map(categoria => {
-        const c = obtenerCelda(deporte, curso, bloque, categoria);
-        return `
-          <div class="match-cell${c.tocado ? ' tocado' : ''}" data-deporte="${deporte}" data-curso="${curso}" data-bloque="${bloque}" data-categoria="${categoria}">
-            <div class="match-cell-label">Bloque ${bloque} · ${LABEL_CATEGORIA[categoria]}</div>
-            <div class="match-cell-score">
-              <div class="lado-marcador rojo">
-                <button class="btn-marcador" type="button" data-accion="restar" data-color="rojo">–</button>
-                <span class="valor-marcador" data-color="rojo">${c.rojo}</span>
-                <button class="btn-marcador" type="button" data-accion="sumar" data-color="rojo">+</button>
-              </div>
-              <span class="sep-marcador">–</span>
-              <div class="lado-marcador azul">
-                <button class="btn-marcador" type="button" data-accion="restar" data-color="azul">–</button>
-                <span class="valor-marcador" data-color="azul">${c.azul}</span>
-                <button class="btn-marcador" type="button" data-accion="sumar" data-color="azul">+</button>
+      function renderGrid(item, curso, grid){
+        grid.innerHTML = BLOQUES.map(bloque => CATEGORIAS.map(categoria => {
+          const c = obtenerCelda(item, curso, bloque, categoria);
+          return `
+            <div class="match-cell${c.tocado ? ' tocado' : ''}" data-item="${item}" data-curso="${curso}" data-bloque="${bloque}" data-categoria="${categoria}">
+              <div class="match-cell-label">Bloque ${bloque} · ${LABEL_CATEGORIA[categoria]}</div>
+              <div class="match-cell-score">
+                <div class="lado-marcador rojo">
+                  <button class="btn-marcador" type="button" data-accion="restar" data-color="rojo">–</button>
+                  <span class="valor-marcador" data-color="rojo">${c.rojo}</span>
+                  <button class="btn-marcador" type="button" data-accion="sumar" data-color="rojo">+</button>
+                </div>
+                <span class="sep-marcador">–</span>
+                <div class="lado-marcador azul">
+                  <button class="btn-marcador" type="button" data-accion="restar" data-color="azul">–</button>
+                  <span class="valor-marcador" data-color="azul">${c.azul}</span>
+                  <button class="btn-marcador" type="button" data-accion="sumar" data-color="azul">+</button>
+                </div>
               </div>
             </div>
-          </div>
-        `;
-      }).join("")).join("");
+          `;
+        }).join("")).join("");
 
-      grid.querySelectorAll(".btn-marcador").forEach(btn => {
-        btn.addEventListener("click", () => onClickMarcador(btn));
-      });
-    }
+        grid.querySelectorAll(".btn-marcador").forEach(btn => {
+          btn.addEventListener("click", () => onClickMarcador(btn));
+        });
+      }
 
-    function actualizarTotalDeporte(deporte){
-      const bloqueDeporte = document.querySelector(`.deporte-acc[data-deporte="${deporte}"]`);
-      if(!bloqueDeporte) return;
-      let totalRojo = 0, totalAzul = 0;
-      const porCurso = estadoPartidos[deporte] || {};
-      Object.values(porCurso).forEach(porBloque => {
-        Object.values(porBloque).forEach(porCategoria => {
-          Object.values(porCategoria).forEach(celda => {
-            const pts = puntosDeCelda(celda);
-            if(pts){ totalRojo += pts.rojo; totalAzul += pts.azul; }
+      function actualizarTotalItem(item){
+        const bloqueItem = document.querySelector(`#${contenedorId} .deporte-acc[data-item="${item}"]`);
+        if(!bloqueItem) return;
+        let totalRojo = 0, totalAzul = 0;
+        const porCurso = estado[item] || {};
+        Object.values(porCurso).forEach(porBloque => {
+          Object.values(porBloque).forEach(porCategoria => {
+            Object.values(porCategoria).forEach(celda => {
+              const pts = puntosDeCelda(celda);
+              if(pts){ totalRojo += pts.rojo; totalAzul += pts.azul; }
+            });
           });
         });
-      });
-      const elR = bloqueDeporte.querySelector("[data-total-rojo]");
-      const elA = bloqueDeporte.querySelector("[data-total-azul]");
-      if(elR) elR.textContent = totalRojo;
-      if(elA) elA.textContent = totalAzul;
-    }
-
-    async function onClickMarcador(btn){
-      const cell = btn.closest(".match-cell");
-      const { deporte, curso, bloque, categoria } = cell.dataset;
-      const color = btn.dataset.color;
-      const delta = btn.dataset.accion === "sumar" ? 1 : -1;
-
-      const c = obtenerCelda(deporte, curso, bloque, categoria);
-      const nuevo = Math.max(0, c[color] + delta);
-      if(nuevo === c[color] && c.tocado) return; // no bajar de 0 si ya estaba en 0
-      c[color] = nuevo;
-      c.tocado = true;
-
-      cell.classList.add("tocado");
-      const valorEl = cell.querySelector(`.valor-marcador[data-color="${color}"]`);
-      if(valorEl) valorEl.textContent = nuevo;
-
-      actualizarTotalDeporte(deporte);
-
-      // Guardar en el Sheet (silencioso: si falla, el cambio ya quedo local y se reintentará en el próximo click)
-      try{
-        const url = `${WORKER_URL}?action=actualizarMarcador&token=${TOKEN}`
-          + `&deporte=${encodeURIComponent(deporte)}&curso=${encodeURIComponent(curso)}`
-          + `&bloque=${encodeURIComponent(bloque)}&categoria=${encodeURIComponent(categoria)}`
-          + `&campo=${color}&delta=${delta}`;
-        const resp = await fetch(url);
-        const data = await resp.json();
-        if(data.error) console.warn("Error guardando marcador en el Sheet:", data.error);
-      }catch(err){
-        console.warn("No se pudo guardar el marcador en el Sheet (queda guardado localmente):", err);
+        const elR = bloqueItem.querySelector("[data-total-rojo]");
+        const elA = bloqueItem.querySelector("[data-total-azul]");
+        if(elR) elR.textContent = totalRojo;
+        if(elA) elA.textContent = totalAzul;
       }
-    }
 
-    function cargarEstadoDeportesDesdeSheet(filas){
-      if(!filas || !filas.length) return;
-      filas.forEach(f => {
-        const deporte = (f.deporte || "").toString().trim();
-        const curso = (f.curso || "").toString().trim();
-        const bloque = (f.bloque || "").toString().trim();
-        const categoria = (f.categoria || "").toString().trim().toLowerCase();
-        if(!deporte || !curso || !bloque || !categoria) return;
-        const c = obtenerCelda(deporte, curso, bloque, categoria);
-        c.rojo = Number(f.goles_rojo) || 0;
-        c.azul = Number(f.goles_azul) || 0;
+      async function onClickMarcador(btn){
+        const cell = btn.closest(".match-cell");
+        const { item, curso, bloque, categoria } = cell.dataset;
+        const color = btn.dataset.color;
+        const delta = btn.dataset.accion === "sumar" ? 1 : -1;
+
+        const c = obtenerCelda(item, curso, bloque, categoria);
+        const nuevo = Math.max(0, c[color] + delta);
+        if(nuevo === c[color] && c.tocado) return; // no bajar de 0 si ya estaba en 0
+        c[color] = nuevo;
         c.tocado = true;
-      });
 
-      DEPORTES.forEach(actualizarTotalDeporte);
+        cell.classList.add("tocado");
+        const valorEl = cell.querySelector(`.valor-marcador[data-color="${color}"]`);
+        if(valorEl) valorEl.textContent = nuevo;
 
-      // Si alguna grilla ya estaba renderizada en pantalla, la volvemos a pintar con los datos reales
-      document.querySelectorAll('.bloques-grid[data-render]').forEach(grid => {
-        const deporte = grid.closest(".deporte-acc").dataset.deporte;
-        renderGrid(deporte, grid.dataset.cursoActivo, grid);
-      });
+        actualizarTotalItem(item);
+
+        // Guardar en el Sheet (silencioso: si falla, el cambio ya quedo local y se reintentará en el próximo click)
+        try{
+          const url = `${WORKER_URL}?action=${accionGuardar}&token=${TOKEN}`
+            + `&${campoNombre}=${encodeURIComponent(item)}&curso=${encodeURIComponent(curso)}`
+            + `&bloque=${encodeURIComponent(bloque)}&categoria=${encodeURIComponent(categoria)}`
+            + `&campo=${color}&delta=${delta}`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          if(data.error) console.warn("Error guardando marcador en el Sheet:", data.error);
+        }catch(err){
+          console.warn("No se pudo guardar el marcador en el Sheet (queda guardado localmente):", err);
+        }
+      }
+
+      function cargarDesdeSheet(filas){
+        if(!filas || !filas.length) return;
+        filas.forEach(f => {
+          const item = (f[campoNombre] || "").toString().trim();
+          const curso = (f.curso || "").toString().trim();
+          const bloque = (f.bloque || "").toString().trim();
+          const categoria = (f.categoria || "").toString().trim().toLowerCase();
+          if(!item || !curso || !bloque || !categoria) return;
+          const c = obtenerCelda(item, curso, bloque, categoria);
+          c.rojo = Number(f.goles_rojo) || 0;
+          c.azul = Number(f.goles_azul) || 0;
+          c.tocado = true;
+        });
+
+        items.forEach(actualizarTotalItem);
+
+        // Si alguna grilla ya estaba renderizada en pantalla, la volvemos a pintar con los datos reales
+        document.querySelectorAll(`#${contenedorId} .bloques-grid[data-render]`).forEach(grid => {
+          const item = grid.closest(".deporte-acc").dataset.item;
+          renderGrid(item, grid.dataset.cursoActivo, grid);
+        });
+      }
+
+      return { construirAcordeon, cargarDesdeSheet };
     }
 
-    construirAcordeonDeportes();
+    const DEPORTES = ["Básquet 3x3", "Fútbol", "Handball", "Softbol", "Vóley", "Atletismo"];
+    const JUEGOS = ["Aliento y banderas", "Ringo", "Delegado", "50 Pases", "Rey-Reina y Bucho", "Tótem"];
+
+    const sistemaDeportes = crearSistemaDePartidos({
+      items: DEPORTES, contenedorId: "deportes-lista", campoNombre: "deporte", accionGuardar: "actualizarMarcador"
+    });
+    const sistemaJuegos = crearSistemaDePartidos({
+      items: JUEGOS, contenedorId: "juegos-lista", campoNombre: "juego", accionGuardar: "actualizarMarcadorJuego"
+    });
+
+    sistemaDeportes.construirAcordeon();
+    sistemaJuegos.construirAcordeon();
 
     // ------- Conexión con Google Sheet (via Cloudflare Worker) -------
     // Reemplazá esta URL por la de tu Worker una vez desplegado.
@@ -1576,7 +1552,8 @@
         }
         if(todo.puntos) pintarPuntos(todo.puntos);
         if(todo.cronograma) pintarCronograma(todo.cronograma);
-        if(todo.deportes) cargarEstadoDeportesDesdeSheet(todo.deportes);
+        if(todo.deportes) sistemaDeportes.cargarDesdeSheet(todo.deportes);
+        if(todo.juegos) sistemaJuegos.cargarDesdeSheet(todo.juegos);
         if(todo.bandos) cargarBandosDesdeSheet(todo.bandos);
       }catch(err){
         console.warn("No se pudo conectar con el Sheet, se mantiene el contenido de ejemplo.", err);
