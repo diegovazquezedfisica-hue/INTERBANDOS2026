@@ -748,7 +748,28 @@
         <p>Listado de alumnos por banda y por ciclo.</p>
       </div>
     </a>
+
+    <a href="#" class="menu-card" data-nav="aliento">
+      <span class="num mono">08</span>
+      <div class="icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21V10M4 10l4-6 4 6M12 21V4M12 4l4 6M20 21V13M20 13l-3-4"/></svg>
+      </div>
+      <div>
+        <h3>Aliento y Banderas</h3>
+        <p>Puntaje del jurado a la presentación de cada banda, por curso.</p>
+      </div>
+    </a>
   </div>
+</section>
+
+<!-- ============ ALIENTO Y BANDERAS ============ -->
+<section class="vista" id="vista-aliento">
+  <div class="header-vista">
+    <h1 class="display">Aliento y Banderas</h1>
+    <p>Cada bloque reparte puntos según el resultado: <strong style="color:var(--oro);">15 al ganador · 10 y 10 si empatan · 5 al que pierde</strong>.</p>
+  </div>
+
+  <div class="deportes-lista" id="aliento-lista"></div>
 </section>
 
 <!-- ============ CAPITANES ============ -->
@@ -1296,7 +1317,7 @@
       return { rojo: 10, azul: 10 };
     }
 
-    function crearSistemaDePartidos({ items, contenedorId, campoNombre, accionGuardar }){
+    function crearSistemaDePartidos({ items, contenedorId, campoNombre, accionGuardar, bloques = BLOQUES, categorias = CATEGORIAS }){
       const estado = {}; // estado[item][curso][bloque][categoria] = {rojo, azul, tocado}
 
       function obtenerCelda(item, curso, bloque, categoria){
@@ -1361,11 +1382,12 @@
       }
 
       function renderGrid(item, curso, grid){
-        grid.innerHTML = BLOQUES.map(bloque => CATEGORIAS.map(categoria => {
+        grid.innerHTML = bloques.map(bloque => categorias.map(categoria => {
           const c = obtenerCelda(item, curso, bloque, categoria);
+          const label = categorias.length > 1 ? `Bloque ${bloque} · ${LABEL_CATEGORIA[categoria] || categoria}` : `Bloque ${bloque}`;
           return `
             <div class="match-cell${c.tocado ? ' tocado' : ''}" data-item="${item}" data-curso="${curso}" data-bloque="${bloque}" data-categoria="${categoria}">
-              <div class="match-cell-label">Bloque ${bloque} · ${LABEL_CATEGORIA[categoria]}</div>
+              <div class="match-cell-label">${label}</div>
               <div class="match-cell-score">
                 <div class="lado-marcador rojo">
                   <button class="btn-marcador" type="button" data-accion="restar" data-color="rojo">–</button>
@@ -1466,7 +1488,8 @@
     }
 
     const DEPORTES = ["Básquet 3x3", "Fútbol", "Handball", "Softbol", "Vóley", "Atletismo"];
-    const JUEGOS = ["Aliento y banderas", "Ringo", "Delegado", "50 Pases", "Rey Reina y Buchon", "Tótem"];
+    const JUEGOS = ["Ringo", "Delegado", "50 Pases", "Rey Reina y Buchon", "Tótem"];
+    const ALIENTO = ["Aliento y Banderas"];
 
     const sistemaDeportes = crearSistemaDePartidos({
       items: DEPORTES, contenedorId: "deportes-lista", campoNombre: "deporte", accionGuardar: "actualizarMarcador"
@@ -1474,9 +1497,15 @@
     const sistemaJuegos = crearSistemaDePartidos({
       items: JUEGOS, contenedorId: "juegos-lista", campoNombre: "juego", accionGuardar: "actualizarMarcadorJuego"
     });
+    const sistemaAliento = crearSistemaDePartidos({
+      items: ALIENTO, contenedorId: "aliento-lista", campoNombre: "item", accionGuardar: "actualizarMarcadorAliento",
+      bloques: Array.from({ length: 12 }, (_, i) => i + 1), // 12 bloques por curso, sin separar por genero
+      categorias: ["general"]
+    });
 
     sistemaDeportes.construirAcordeon();
     sistemaJuegos.construirAcordeon();
+    sistemaAliento.construirAcordeon();
 
     // ------- Conexión con Google Sheet (via Cloudflare Worker) -------
     // Reemplazá esta URL por la de tu Worker una vez desplegado.
@@ -1554,6 +1583,7 @@
         if(todo.cronograma) pintarCronograma(todo.cronograma);
         if(todo.deportes) sistemaDeportes.cargarDesdeSheet(todo.deportes);
         if(todo.juegos) sistemaJuegos.cargarDesdeSheet(todo.juegos);
+        if(todo.aliento) sistemaAliento.cargarDesdeSheet(todo.aliento);
         if(todo.bandos) cargarBandosDesdeSheet(todo.bandos);
       }catch(err){
         console.warn("No se pudo conectar con el Sheet, se mantiene el contenido de ejemplo.", err);
@@ -1603,12 +1633,12 @@
     const topbarTitle = document.getElementById('topbarTitle');
     const titulos = {
       menu:'MENÚ', capitanes:'CAPITANES', juegos:'JUEGOS',
-      deportes:'DEPORTES', puntos:'PUNTOS', final:'FINAL', cronograma:'CRONOGRAMA', bandos:'BANDOS'
+      deportes:'DEPORTES', puntos:'PUNTOS', final:'FINAL', cronograma:'CRONOGRAMA', bandos:'BANDOS', aliento:'ALIENTO Y BANDERAS'
     };
 
     // ------- Acceso con PIN: Capitanes (solo asistencia) / Profes (todo) -------
     // Cambiá estos dos PIN por los que quieras usar en tu escuela.
-   const PIN_CAPITANES = "IMMCAPIS";
+    const PIN_CAPITANES = "IMMCAPIS";
 const PIN_PROFES = "PROFES26";
     let modoAcceso = null; // null | "capitanes" | "profes"
 
