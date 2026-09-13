@@ -156,6 +156,64 @@
   .azul-chip .dot{background:var(--azul);}
   .vs-x{font-family:'Anton',sans-serif; font-size:1.1rem; color:var(--violeta); text-shadow:0 0 14px rgba(139,95,191,.5);}
 
+  /* ---------- PORTADA: stats publicas ---------- */
+  .portada-stats{
+    display:flex; gap:14px; margin-top:6px; width:100%; max-width:420px;
+  }
+  .portada-stat{
+    flex:1; border-radius:14px; padding:14px 10px; text-align:center;
+    border:1px solid rgba(245,243,238,.1);
+  }
+  .portada-stat.rojo{ background:rgba(228,87,46,.14); }
+  .portada-stat.azul{ background:rgba(29,92,158,.16); }
+  .portada-stat-num{
+    display:block; font-family:'Anton',sans-serif; font-size:1.7rem; line-height:1;
+  }
+  .portada-stat.rojo .portada-stat-num{ color:var(--rojo); }
+  .portada-stat.azul .portada-stat-num{ color:var(--azul); }
+  .portada-stat-label{
+    display:block; font-size:.62rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--crema-dim); margin-top:2px;
+  }
+  .portada-stat-pts{
+    display:block; font-family:'Space Mono',monospace; font-size:.72rem; margin-top:6px; color:var(--crema-dim);
+  }
+
+  /* ---------- PORTADA: accesos con PIN ---------- */
+  .portada-accesos{ display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; justify-content:center; }
+  .btn-acceso{
+    display:inline-flex; align-items:center; gap:8px;
+    font-weight:800; font-size:.85rem; letter-spacing:.02em; text-transform:uppercase;
+    padding:13px 22px; border-radius:999px; transition:transform .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  .btn-acceso:hover{ transform:translateY(-3px); }
+  .btn-acceso-capitanes{ background:rgba(139,95,191,.2); border:1.5px solid var(--violeta); color:var(--crema); }
+  .btn-acceso-profes{ background:var(--oro); color:#1a1206; box-shadow:0 10px 30px rgba(217,164,65,.25); }
+
+  /* ---------- MODAL DE PIN ---------- */
+  .pin-modal-overlay{
+    position:fixed; inset:0; z-index:100;
+    background:rgba(10,8,18,.75); backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .pin-modal{
+    background:var(--neg-2); border:1px solid rgba(245,243,238,.14); border-radius:18px;
+    padding:28px 26px; max-width:320px; width:100%; text-align:center;
+  }
+  .pin-modal h3{ font-family:'Anton',sans-serif; font-size:1.2rem; margin-bottom:16px; letter-spacing:.02em; }
+  .pin-modal input{
+    width:100%; text-align:center; font-family:'Space Mono',monospace; font-size:1.4rem; letter-spacing:.3em;
+    background:var(--neg); border:1px solid rgba(245,243,238,.18); border-radius:10px;
+    color:var(--crema); padding:12px; margin-bottom:10px;
+  }
+  .pin-modal-error{ color:var(--rojo); font-size:.78rem; margin-bottom:10px; }
+  .pin-modal-botones{ display:flex; gap:10px; margin-top:6px; }
+  .pin-modal-botones button{
+    flex:1; padding:11px; border-radius:10px; font-weight:700; font-size:.85rem;
+  }
+  #pin-cancelar{ background:rgba(245,243,238,.08); color:var(--crema-dim); }
+  #pin-confirmar{ background:var(--oro); color:#1a1206; }
+
   .btn-ingresar{
     margin-top:18px;
     display:inline-flex; align-items:center; gap:10px;
@@ -516,15 +574,15 @@
 
 <!-- ============ TOP BAR ============ -->
 <div class="topbar hidden" id="topbar">
-  <a href="#" class="btn-back" data-nav="menu">
+  <a href="#" class="btn-back" id="topbar-back-btn">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18l-6-6 6-6"/></svg>
-    Menú
+    <span id="topbar-back-texto">Menú</span>
   </a>
   <div class="topbar-brand">
     <span class="patch"><img src="escudo.png" alt="Escudo Instituto Mariano Moreno"></span>
     <span class="topbar-title display" id="topbarTitle">INTERBANDOS</span>
   </div>
-  <div class="topbar-split" aria-hidden="true"><span></span><span></span><span></span></div>
+  <button class="btn-back" id="topbar-salir-btn" type="button" style="margin-left:auto;">Salir</button>
 </div>
 
 <!-- ============ PORTADA ============ -->
@@ -558,6 +616,19 @@
         </div>
       </div>
 
+      <div class="portada-stats">
+        <div class="portada-stat rojo">
+          <span class="portada-stat-num" id="portada-alumnos-rojo">–</span>
+          <span class="portada-stat-label">Alumnos Rojo</span>
+          <span class="portada-stat-pts" id="portada-pts-rojo">– pts</span>
+        </div>
+        <div class="portada-stat azul">
+          <span class="portada-stat-num" id="portada-alumnos-azul">–</span>
+          <span class="portada-stat-label">Alumnos Azul</span>
+          <span class="portada-stat-pts" id="portada-pts-azul">– pts</span>
+        </div>
+      </div>
+
       <p class="subtitulo-hero">Un cuatrimestre, dos bandas, un solo torneo. Seguí capitanes, juegos, deportes y el marcador general rumbo a la gran final.</p>
 
       <div class="countdown-wrap">
@@ -570,10 +641,14 @@
         </div>
       </div>
 
-      <button class="btn-ingresar" data-nav="menu">
-        Ingresar al torneo
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 6l6 6-6 6"/></svg>
-      </button>
+      <div class="portada-accesos">
+        <button class="btn-acceso btn-acceso-capitanes" type="button" data-acceso="capitanes">
+          Acceso Capitanes
+        </button>
+        <button class="btn-acceso btn-acceso-profes" type="button" data-acceso="profes">
+          Acceso Profes
+        </button>
+      </div>
     </div>
 
   </div>
@@ -1194,6 +1269,13 @@
         BANDOS_POR_CICLO[ciclo] = combinados;
       });
 
+      const totalAlumnosRojo = BANDOS_POR_CICLO["1"].filter(a => a.bando === "rojo").length + BANDOS_POR_CICLO["2"].filter(a => a.bando === "rojo").length;
+      const totalAlumnosAzul = BANDOS_POR_CICLO["1"].filter(a => a.bando === "azul").length + BANDOS_POR_CICLO["2"].filter(a => a.bando === "azul").length;
+      const elAlumnosRojo = document.getElementById("portada-alumnos-rojo");
+      const elAlumnosAzul = document.getElementById("portada-alumnos-azul");
+      if(elAlumnosRojo) elAlumnosRojo.textContent = totalAlumnosRojo;
+      if(elAlumnosAzul) elAlumnosAzul.textContent = totalAlumnosAzul;
+
       // Si ya se estaba viendo un paso con datos, lo refrescamos con los datos reales del Sheet
       if(bandosCicloActual){
         if(document.getElementById("bandos-paso-curso").style.display !== "none"){
@@ -1207,12 +1289,13 @@
 
     construirCiclosBandos();
 
-    // Reset del flujo de Bandos cada vez que se entra a esa sección desde el menú
-    document.querySelector('[data-nav="bandos"]').addEventListener("click", () => {
+    // Reset del flujo de Bandos (se llama al entrar desde el menú, o directo desde el acceso Capitanes)
+    function resetYMostrarBandos(){
       bandosCicloActual = null;
       bandosCursoActual = null;
       mostrarPasoBandos("ciclo");
-    });
+    }
+    document.querySelector('[data-nav="bandos"]').addEventListener("click", resetYMostrarBandos);
 
     // ------- Deportes: acordeon > pestañas de curso > 4 bloques x 3 categorias, editable con +/- -------
     const DEPORTES = ["Básquet 3x3", "Fútbol", "Handball", "Softbol", "Vóley", "Atletismo"];
@@ -1443,6 +1526,11 @@
       const totalAzul = data.totalAzul ?? (data.general || []).reduce((s,f) => s + (Number(f.azul)||0), 0);
       document.getElementById("totalRojo").textContent = totalRojo;
       document.getElementById("totalAzul").textContent = totalAzul;
+
+      const ptsRojoPortada = document.getElementById("portada-pts-rojo");
+      const ptsAzulPortada = document.getElementById("portada-pts-azul");
+      if(ptsRojoPortada) ptsRojoPortada.textContent = totalRojo + " pts";
+      if(ptsAzulPortada) ptsAzulPortada.textContent = totalAzul + " pts";
     }
 
     function pintarCronograma(items){
@@ -1519,6 +1607,74 @@
       deportes:'DEPORTES', puntos:'PUNTOS', final:'FINAL', cronograma:'CRONOGRAMA', bandos:'BANDOS'
     };
 
+    // ------- Acceso con PIN: Capitanes (solo asistencia) / Profes (todo) -------
+    // Cambiá estos dos PIN por los que quieras usar en tu escuela.
+    const PIN_CAPITANES = "IMMCAPIS";
+    const PIN_PROFES = "PROFESIMM2026";
+    let modoAcceso = null; // null | "capitanes" | "profes"
+
+    const pinOverlay = document.getElementById("pin-modal-overlay");
+    const pinInput = document.getElementById("pin-input");
+    const pinTitulo = document.getElementById("pin-modal-titulo");
+    const pinError = document.getElementById("pin-modal-error");
+    let pinAccesoPendiente = null;
+
+    function abrirModalPin(tipo){
+      pinAccesoPendiente = tipo;
+      pinTitulo.textContent = tipo === "capitanes" ? "PIN de Capitanes" : "PIN de Profes";
+      pinInput.value = "";
+      pinError.style.display = "none";
+      pinOverlay.style.display = "flex";
+      setTimeout(() => pinInput.focus(), 50);
+    }
+
+    function cerrarModalPin(){
+      pinOverlay.style.display = "none";
+      pinAccesoPendiente = null;
+    }
+
+    function confirmarPin(){
+      const valor = pinInput.value.trim();
+      const correcto = pinAccesoPendiente === "capitanes" ? PIN_CAPITANES : PIN_PROFES;
+      if(valor !== correcto){
+        pinError.style.display = "block";
+        pinInput.value = "";
+        pinInput.focus();
+        return;
+      }
+      const tipo = pinAccesoPendiente;
+      cerrarModalPin();
+      modoAcceso = tipo;
+      if(tipo === "capitanes"){
+        irA("bandos");
+        resetYMostrarBandos();
+      } else {
+        irA("menu");
+      }
+    }
+
+    document.querySelectorAll('[data-acceso]').forEach(btn => {
+      btn.addEventListener("click", () => abrirModalPin(btn.dataset.acceso));
+    });
+    document.getElementById("pin-cancelar").addEventListener("click", cerrarModalPin);
+    document.getElementById("pin-confirmar").addEventListener("click", confirmarPin);
+    pinInput.addEventListener("keydown", e => { if(e.key === "Enter") confirmarPin(); });
+
+    function salirAlAPortada(){
+      modoAcceso = null;
+      irA("portada");
+    }
+    document.getElementById("topbar-salir-btn").addEventListener("click", salirAlAPortada);
+    document.getElementById("topbar-back-btn").addEventListener("click", e => {
+      e.preventDefault();
+      // Capitanes solo tiene Bandos: el "volver" los manda directo a la portada (no ven el menú completo)
+      if(modoAcceso === "capitanes"){
+        salirAlAPortada();
+      } else {
+        irA("menu");
+      }
+    });
+
     function irA(id){
       vistas.forEach(v => v.classList.remove('activa'));
       const target = document.getElementById('vista-' + id);
@@ -1529,6 +1685,7 @@
       } else {
         topbar.classList.remove('hidden');
         topbarTitle.textContent = titulos[id] || 'INTERBANDOS';
+        document.getElementById('topbar-back-texto').textContent = modoAcceso === 'capitanes' ? 'Salir' : 'Menú';
       }
       window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
       try{ history.replaceState(null, '', '#' + id); }catch(e){ /* sandbox no permite tocar el historial */ }
@@ -1552,11 +1709,9 @@
       });
     });
 
-    // Deep-link inicial
-    const hash = location.hash.replace('#','');
-    if(hash && document.getElementById('vista-' + hash)){
-      irA(hash);
-    }
+    // Nota: se eliminó el deep-link automático por #hash a propósito, para que
+    // no se pueda saltear la pantalla de acceso (Capitanes/Profes) escribiendo
+    // la URL directo (ej. .../index.html#deportes). Siempre se arranca en portada.
 
     // Registrar el service worker para que la app sea instalable
     if('serviceWorker' in navigator){
@@ -1567,6 +1722,18 @@
   })();
 </script>
 
+<!-- ============ MODAL DE PIN ============ -->
+<div class="pin-modal-overlay" id="pin-modal-overlay" style="display:none;">
+  <div class="pin-modal">
+    <h3 id="pin-modal-titulo">Ingresá el PIN</h3>
+    <input type="password" id="pin-input" inputmode="numeric" maxlength="8" placeholder="••••" autocomplete="off">
+    <div class="pin-modal-error" id="pin-modal-error" style="display:none;">PIN incorrecto</div>
+    <div class="pin-modal-botones">
+      <button type="button" id="pin-cancelar">Cancelar</button>
+      <button type="button" id="pin-confirmar">Ingresar</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
- 
