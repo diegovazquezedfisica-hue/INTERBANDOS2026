@@ -582,7 +582,10 @@
     <span class="patch"><img src="escudo.png" alt="Escudo Instituto Mariano Moreno"></span>
     <span class="topbar-title display" id="topbarTitle">INTERBANDOS</span>
   </div>
-  <button class="btn-back" id="topbar-salir-btn" type="button" style="margin-left:auto;">Salir</button>
+  <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+    <button class="btn-back" id="topbar-inicio-btn" type="button">Inicio</button>
+    <button class="btn-back" id="topbar-salir-btn" type="button">Salir</button>
+  </div>
 </div>
 
 <!-- ============ PORTADA ============ -->
@@ -641,12 +644,18 @@
         </div>
       </div>
 
-      <div class="portada-accesos">
+      <div class="portada-accesos" id="portada-accesos-pin">
         <button class="btn-acceso btn-acceso-capitanes" type="button" data-acceso="capitanes">
           Acceso Capitanes
         </button>
         <button class="btn-acceso btn-acceso-profes" type="button" data-acceso="profes">
           Acceso Profes
+        </button>
+      </div>
+
+      <div class="portada-accesos" id="portada-accesos-continuar" style="display:none;">
+        <button class="btn-acceso btn-acceso-profes" type="button" id="btn-continuar-sesion">
+          Continuar
         </button>
       </div>
     </div>
@@ -1622,7 +1631,7 @@
 
     // ------- Acceso con PIN: Capitanes (solo asistencia) / Profes (todo) -------
     // Cambiá estos dos PIN por los que quieras usar en tu escuela.
-    const PIN_CAPITANES = "IMMCAPIS";
+   const PIN_CAPITANES = "IMMCAPIS";
 const PIN_PROFES = "PROFES26";
     let modoAcceso = null; // null | "capitanes" | "profes"
 
@@ -1675,9 +1684,34 @@ const PIN_PROFES = "PROFES26";
 
     function salirAlAPortada(){
       modoAcceso = null;
+      actualizarAccesosPortada();
       irA("portada");
     }
+    function irAlInicio(){
+      // A diferencia de Salir, esto NO borra la sesión: si volvés a entrar, no te pide el PIN de nuevo
+      actualizarAccesosPortada();
+      irA("portada");
+    }
+    function actualizarAccesosPortada(){
+      const conPin = document.getElementById("portada-accesos-pin");
+      const continuar = document.getElementById("portada-accesos-continuar");
+      if(modoAcceso){
+        conPin.style.display = "none";
+        continuar.style.display = "flex";
+      } else {
+        conPin.style.display = "flex";
+        continuar.style.display = "none";
+      }
+    }
+    document.getElementById("btn-continuar-sesion").addEventListener("click", () => {
+      if(modoAcceso === "capitanes"){
+        irA("bandos");
+      } else if(modoAcceso === "profes"){
+        irA("menu");
+      }
+    });
     document.getElementById("topbar-salir-btn").addEventListener("click", salirAlAPortada);
+    document.getElementById("topbar-inicio-btn").addEventListener("click", irAlInicio);
     document.getElementById("topbar-back-btn").addEventListener("click", e => {
       e.preventDefault();
       // Capitanes solo tiene Bandos: el "volver" los manda directo a la portada (no ven el menú completo)
