@@ -767,7 +767,7 @@
       </div>
       <div>
         <h3>Puntajes de Primaria</h3>
-        <p>Puntaje de primaria, por grado y categoría.</p>
+        <p>Carga manual de puntos para Rojo y Azul.</p>
       </div>
     </a>
 
@@ -808,10 +808,25 @@
 <section class="vista" id="vista-primaria">
   <div class="header-vista">
     <h1 class="display">Puntajes de Primaria</h1>
-    <p>Cada bloque reparte puntos según el resultado: <strong style="color:var(--oro);">15 al ganador · 10 y 10 si empatan · 5 al que pierde</strong>. Suma al total general del torneo.</p>
+    <p>Carga manual de puntos para Rojo y Azul. Suma directo al total general del torneo.</p>
   </div>
 
-  <div class="deportes-lista" id="primaria-lista"></div>
+  <div class="match-cell" id="primaria-cell" style="max-width:380px;">
+    <div class="match-cell-label">Puntaje total de Primaria</div>
+    <div class="match-cell-score">
+      <div class="lado-marcador rojo">
+        <button class="btn-marcador" type="button" data-accion="restar" data-color="rojo">–</button>
+        <span class="valor-marcador" id="primaria-valor-rojo" data-color="rojo">0</span>
+        <button class="btn-marcador" type="button" data-accion="sumar" data-color="rojo">+</button>
+      </div>
+      <span class="sep-marcador">–</span>
+      <div class="lado-marcador azul">
+        <button class="btn-marcador" type="button" data-accion="restar" data-color="azul">–</button>
+        <span class="valor-marcador" id="primaria-valor-azul" data-color="azul">0</span>
+        <button class="btn-marcador" type="button" data-accion="sumar" data-color="azul">+</button>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- ============ CAPITANES ============ -->
@@ -1533,8 +1548,6 @@
     const JUEGOS = ["Ringo", "Delegado", "50 Pases", "Rey Reina y Buchon", "Tótem"];
     const ALIENTO = ["Aliento y Banderas"];
     const EXTRAPROGRAMATICA = ["Vóley", "Fútbol"];
-    const PRIMARIA_ITEMS = ["Puntajes de Primaria"];
-    const CURSOS_PRIMARIA = ["1° grado", "2° grado", "3° grado", "4° grado", "5° grado", "6° grado"];
 
     const sistemaDeportes = crearSistemaDePartidos({
       items: DEPORTES, contenedorId: "deportes-lista", campoNombre: "deporte", accionGuardar: "actualizarMarcador"
@@ -1550,16 +1563,46 @@
     const sistemaExtra = crearSistemaDePartidos({
       items: EXTRAPROGRAMATICA, contenedorId: "extra-lista", campoNombre: "item", accionGuardar: "actualizarMarcadorExtra"
     });
-    const sistemaPrimaria = crearSistemaDePartidos({
-      items: PRIMARIA_ITEMS, contenedorId: "primaria-lista", campoNombre: "item", accionGuardar: "actualizarMarcadorPrimaria",
-      cursos: CURSOS_PRIMARIA
-    });
 
     sistemaDeportes.construirAcordeon();
     sistemaJuegos.construirAcordeon();
     sistemaAliento.construirAcordeon();
     sistemaExtra.construirAcordeon();
-    sistemaPrimaria.construirAcordeon();
+
+    // ------- Puntajes de Primaria: carga manual simple, solo Rojo y Azul (sin curso ni bloques) -------
+    const primariaValores = { rojo: 0, azul: 0 };
+
+    function pintarPrimaria(){
+      document.getElementById("primaria-valor-rojo").textContent = primariaValores.rojo;
+      document.getElementById("primaria-valor-azul").textContent = primariaValores.azul;
+    }
+
+    document.querySelectorAll("#primaria-cell .btn-marcador").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const color = btn.dataset.color;
+        const delta = btn.dataset.accion === "sumar" ? 1 : -1;
+        const nuevo = Math.max(0, primariaValores[color] + delta);
+        if(nuevo === primariaValores[color]) return;
+        primariaValores[color] = nuevo;
+        pintarPrimaria();
+
+        try{
+          const url = `${WORKER_URL}?action=actualizarMarcadorPrimaria&token=${TOKEN}&campo=${color}&delta=${delta}`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          if(data.error) console.warn("Error guardando puntaje de primaria:", data.error);
+        }catch(err){
+          console.warn("No se pudo guardar el puntaje de primaria en el Sheet (queda guardado localmente):", err);
+        }
+      });
+    });
+
+    function cargarPrimariaDesdeSheet(data){
+      if(!data) return;
+      primariaValores.rojo = Number(data.rojo) || 0;
+      primariaValores.azul = Number(data.azul) || 0;
+      pintarPrimaria();
+    }
 
     // ------- Conexión con Google Sheet (via Cloudflare Worker) -------
     // Reemplazá esta URL por la de tu Worker una vez desplegado.
@@ -1639,7 +1682,7 @@
         if(todo.juegos) sistemaJuegos.cargarDesdeSheet(todo.juegos);
         if(todo.aliento) sistemaAliento.cargarDesdeSheet(todo.aliento);
         if(todo.extraprogramatica) sistemaExtra.cargarDesdeSheet(todo.extraprogramatica);
-        if(todo.primaria) sistemaPrimaria.cargarDesdeSheet(todo.primaria);
+        if(todo.primaria) cargarPrimariaDesdeSheet(todo.primaria);
         if(todo.bandos) cargarBandosDesdeSheet(todo.bandos);
       }catch(err){
         console.warn("No se pudo conectar con el Sheet, se mantiene el contenido de ejemplo.", err);
