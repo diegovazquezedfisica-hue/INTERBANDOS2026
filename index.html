@@ -896,8 +896,15 @@
       Elegir otra banda
     </button>
     <div id="coreo-lista-titulo" class="bandos-listado-titulo"></div>
-    <p style="color:var(--crema-dim); font-size:.85rem; margin-bottom:14px;">Tocá <strong>"No participa"</strong> para sumar a un alumno a la coreografía. Una vez que participa, se le puede tomar asistencia.</p>
-    <div class="asistencia-fecha-row">
+
+    <div class="curso-tabs" style="margin-bottom:18px;">
+      <button class="curso-tab activo" type="button" data-coreo-modo="asistencia">Tomar asistencia</button>
+      <button class="curso-tab" type="button" data-coreo-modo="participantes">Gestionar participantes</button>
+    </div>
+
+    <p id="coreo-modo-ayuda" style="color:var(--crema-dim); font-size:.85rem; margin-bottom:14px;"></p>
+
+    <div class="asistencia-fecha-row" id="coreo-fecha-row">
       <label for="coreo-fecha">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
         Fecha de asistencia
@@ -1481,9 +1488,10 @@
     }
     document.querySelector('[data-nav="bandos"]').addEventListener("click", resetYMostrarBandos);
 
-    // ------- Coreografías: ciclo -> banda -> participantes + asistencia filtrada -------
+    // ------- Coreografías: ciclo -> banda -> [Tomar asistencia | Gestionar participantes] -------
     let coreoCicloActual = null;
     let coreoBandaActual = null;
+    let coreoModoActual = "asistencia"; // "asistencia" (lista definitiva, semanal) o "participantes" (agregar/quitar, ocasional)
 
     function mostrarPasoCoreo(paso){
       document.getElementById("coreo-paso-ciclo").style.display = paso === "ciclo" ? "" : "none";
@@ -1494,6 +1502,7 @@
     function resetYMostrarCoreo(){
       coreoCicloActual = null;
       coreoBandaActual = null;
+      coreoModoActual = "asistencia";
       mostrarPasoCoreo("ciclo");
     }
     document.querySelector('[data-nav="coreografias"]').addEventListener("click", resetYMostrarCoreo);
@@ -1533,6 +1542,7 @@
       cont.querySelectorAll(".coreo-banda-card").forEach(btn => {
         btn.addEventListener("click", () => {
           coreoBandaActual = btn.dataset.banda;
+          coreoModoActual = "asistencia"; // siempre arranca en la lista definitiva de asistencia
           mostrarPasoCoreo("lista");
           renderListaCoreo();
         });
@@ -1541,6 +1551,15 @@
 
     document.querySelectorAll("[data-volver-coreo]").forEach(btn => {
       btn.addEventListener("click", () => mostrarPasoCoreo(btn.dataset.volverCoreo));
+    });
+
+    document.querySelectorAll('[data-coreo-modo]').forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll('[data-coreo-modo]').forEach(t => t.classList.remove("activo"));
+        tab.classList.add("activo");
+        coreoModoActual = tab.dataset.coreoModo;
+        pintarListaCoreo();
+      });
     });
 
     async function pedirParticipantesCoreo(ciclo, banda){
@@ -1572,6 +1591,8 @@
       const colorVar = coreoBandaActual === "rojo" ? "var(--rojo)" : "var(--azul)";
       titulo.innerHTML = `<h3 style="color:${colorVar};">Bando ${coreoBandaActual === "rojo" ? "Rojo" : "Azul"} · ${coreoCicloActual}° Ciclo</h3>`;
 
+      document.querySelectorAll('[data-coreo-modo]').forEach(t => t.classList.toggle("activo", t.dataset.coreoModo === coreoModoActual));
+
       const fechaInput = document.getElementById("coreo-fecha");
       if(!fechaInput.value){
         fechaInput.value = new Date().toISOString().slice(0, 10);
@@ -1583,52 +1604,84 @@
 
     async function pintarListaCoreo(){
       const cont = document.getElementById("coreo-lista-cont");
+      const ayuda = document.getElementById("coreo-modo-ayuda");
+      const filaFecha = document.getElementById("coreo-fecha-row");
+
       const alumnosCiclo = BANDOS_POR_CICLO[coreoCicloActual] || [];
       const alumnosBanda = alumnosCiclo.filter(a => a.bando === coreoBandaActual);
 
       if(!alumnosBanda.length){
+        filaFecha.style.display = "none";
+        ayuda.textContent = "";
         cont.innerHTML = `<div class="bandos-listado-vacio">Todavía no hay alumnos cargados para este bando.</div>`;
         return;
       }
 
       cont.innerHTML = `<div class="asistencia-cargando">Cargando...</div>`;
-      const fecha = document.getElementById("coreo-fecha").value;
-      const [participantes, asistencia] = await Promise.all([
-        pedirParticipantesCoreo(coreoCicloActual, coreoBandaActual),
-        pedirAsistenciaCoreo(coreoCicloActual, coreoBandaActual, fecha)
-      ]);
-
+      const participantes = await pedirParticipantesCoreo(coreoCicloActual, coreoBandaActual);
       const mapaParticipa = {};
       participantes.forEach(p => {
         mapaParticipa[(p.nombre || "").trim()] = (p.participa === true || p.participa === "true" || p.participa === "TRUE");
       });
+
+      if(coreoModoActual === "participantes"){
+        // ---- Modo gestión: se ve TODA la división, para sumar o sacar gente de la lista definitiva ----
+        filaFecha.style.display = "none";
+        ayuda.textContent = 'Tocá "Participa" para sumar (o sacar) alumnos de la lista definitiva de la coreografía. Esto lo hacés una sola vez por alumno, no hace falta repetirlo cada semana.';
+
+        cont.innerHTML = alumnosBanda.map(a => {
+          const nombre = (a.nombre || "").trim();
+          const participa = !!mapaParticipa[nombre];
+          return `
+            <div class="capitan-row coreo-row" data-nombre="${a.nombre}" data-curso="${a.curso || ""}">
+              <div class="avatar-placeholder">${iniciales(a.nombre)}</div>
+              <div class="capitan-info"><span class="nombre">${a.nombre || ""}</span><span class="curso">${a.curso || ""}</span></div>
+              <button class="btn-participa${participa ? ' activo' : ''}" type="button" data-participa="${participa}">
+                ${participa ? "Participa" : "No participa"}
+              </button>
+            </div>
+          `;
+        }).join("");
+
+        cont.querySelectorAll(".btn-participa").forEach(btn => {
+          btn.addEventListener("click", () => toggleParticipaCoreo(btn));
+        });
+        return;
+      }
+
+      // ---- Modo asistencia (default): SOLO la lista definitiva de participantes confirmados ----
+      filaFecha.style.display = "";
+      const fecha = document.getElementById("coreo-fecha").value;
+      const asistencia = await pedirAsistenciaCoreo(coreoCicloActual, coreoBandaActual, fecha);
       const mapaPresente = {};
       asistencia.forEach(a => {
         mapaPresente[(a.nombre || "").trim()] = (a.presente === true || a.presente === "true" || a.presente === "TRUE");
       });
 
-      cont.innerHTML = alumnosBanda.map(a => {
+      const participantesConfirmados = alumnosBanda.filter(a => mapaParticipa[(a.nombre || "").trim()]);
+
+      if(!participantesConfirmados.length){
+        ayuda.textContent = "";
+        cont.innerHTML = `<div class="bandos-listado-vacio">Todavía no hay nadie en la lista de esta coreografía. Andá a "Gestionar participantes" para sumar alumnos.</div>`;
+        return;
+      }
+
+      ayuda.textContent = "Lista definitiva de la coreografía — marcá presente/ausente para la fecha elegida.";
+      cont.innerHTML = participantesConfirmados.map(a => {
         const nombre = (a.nombre || "").trim();
-        const participa = !!mapaParticipa[nombre];
         const presente = !!mapaPresente[nombre];
         return `
-          <div class="capitan-row coreo-row" data-nombre="${a.nombre}" data-curso="${a.curso || ""}">
+          <div class="capitan-row coreo-row" data-nombre="${a.nombre}">
             <div class="avatar-placeholder">${iniciales(a.nombre)}</div>
             <div class="capitan-info"><span class="nombre">${a.nombre || ""}</span><span class="curso">${a.curso || ""}</span></div>
-            <button class="btn-participa${participa ? ' activo' : ''}" type="button" data-participa="${participa}">
-              ${participa ? "Participa" : "No participa"}
-            </button>
-            <button class="btn-asistencia${presente ? ' presente' : ''}${participa ? '' : ' deshabilitado'}" type="button" data-presente="${presente}" ${participa ? '' : 'disabled'}>
+            <button class="btn-asistencia${presente ? ' presente' : ''}" type="button" data-presente="${presente}">
               ${presente ? "Presente" : "Ausente"}
             </button>
           </div>
         `;
       }).join("");
 
-      cont.querySelectorAll(".btn-participa").forEach(btn => {
-        btn.addEventListener("click", () => toggleParticipaCoreo(btn));
-      });
-      cont.querySelectorAll(".btn-asistencia:not(.deshabilitado)").forEach(btn => {
+      cont.querySelectorAll(".btn-asistencia").forEach(btn => {
         btn.addEventListener("click", () => toggleAsistenciaCoreo(btn));
       });
     }
@@ -1642,15 +1695,6 @@
       btn.dataset.participa = nuevoEstado;
       btn.textContent = nuevoEstado ? "Participa" : "No participa";
       btn.classList.toggle("activo", nuevoEstado);
-
-      const btnAsistencia = fila.querySelector(".btn-asistencia");
-      btnAsistencia.classList.toggle("deshabilitado", !nuevoEstado);
-      if(nuevoEstado){
-        btnAsistencia.removeAttribute("disabled");
-        btnAsistencia.addEventListener("click", () => toggleAsistenciaCoreo(btnAsistencia));
-      } else {
-        btnAsistencia.setAttribute("disabled", "disabled");
-      }
 
       try{
         const url = `${WORKER_URL}?action=actualizarParticipanteCoreografia&token=${TOKEN}`
