@@ -1738,7 +1738,7 @@
 
     // ------- Acceso con PIN: Capitanes (solo asistencia) / Profes (todo) -------
     // Cambiá estos dos PIN por los que quieras usar en tu escuela.
-    const PIN_CAPITANES = "IMMCAPIS";
+   const PIN_CAPITANES = "IMMCAPIS";
 const PIN_PROFES = "PROFES26";
     let modoAcceso = null; // null | "capitanes" | "profes"
 
@@ -1762,6 +1762,19 @@ const PIN_PROFES = "PROFES26";
       pinAccesoPendiente = null;
     }
 
+    // Secciones a las que Capitanes puede entrar (el resto del menú queda oculto para ellos)
+    const SECCIONES_CAPITANES = ["bandos", "puntos"];
+
+    function filtrarMenuParaCapitanes(activo){
+      document.querySelectorAll(".menu-grid .menu-card").forEach(card => {
+        if(activo){
+          card.style.display = SECCIONES_CAPITANES.includes(card.dataset.nav) ? "" : "none";
+        } else {
+          card.style.display = "";
+        }
+      });
+    }
+
     function confirmarPin(){
       const valor = pinInput.value.trim().toLowerCase();
       const correcto = (pinAccesoPendiente === "capitanes" ? PIN_CAPITANES : PIN_PROFES).toLowerCase();
@@ -1774,12 +1787,8 @@ const PIN_PROFES = "PROFES26";
       const tipo = pinAccesoPendiente;
       cerrarModalPin();
       modoAcceso = tipo;
-      if(tipo === "capitanes"){
-        irA("bandos");
-        resetYMostrarBandos();
-      } else {
-        irA("menu");
-      }
+      filtrarMenuParaCapitanes(modoAcceso === "capitanes");
+      irA("menu");
     }
 
     document.querySelectorAll('[data-acceso]').forEach(btn => {
@@ -1811,22 +1820,15 @@ const PIN_PROFES = "PROFES26";
       }
     }
     document.getElementById("btn-continuar-sesion").addEventListener("click", () => {
-      if(modoAcceso === "capitanes"){
-        irA("bandos");
-      } else if(modoAcceso === "profes"){
-        irA("menu");
-      }
+      filtrarMenuParaCapitanes(modoAcceso === "capitanes");
+      irA("menu");
     });
     document.getElementById("topbar-salir-btn").addEventListener("click", salirAlAPortada);
     document.getElementById("topbar-inicio-btn").addEventListener("click", irAlInicio);
     document.getElementById("topbar-back-btn").addEventListener("click", e => {
       e.preventDefault();
-      // Capitanes solo tiene Bandos: el "volver" los manda directo a la portada (no ven el menú completo)
-      if(modoAcceso === "capitanes"){
-        salirAlAPortada();
-      } else {
-        irA("menu");
-      }
+      // Tanto Capitanes como Profes vuelven a su menú (a Capitanes ya le queda filtrado con Bandos y Puntos nomás)
+      irA("menu");
     });
 
     function irA(id){
@@ -1839,7 +1841,7 @@ const PIN_PROFES = "PROFES26";
       } else {
         topbar.classList.remove('hidden');
         topbarTitle.textContent = titulos[id] || 'INTERBANDOS';
-        document.getElementById('topbar-back-texto').textContent = modoAcceso === 'capitanes' ? 'Salir' : 'Menú';
+        document.getElementById('topbar-back-texto').textContent = 'Menú';
       }
       window.scrollTo({top:0, behavior:'instant' in window ? 'instant' : 'auto'});
       try{ history.replaceState(null, '', '#' + id); }catch(e){ /* sandbox no permite tocar el historial */ }
